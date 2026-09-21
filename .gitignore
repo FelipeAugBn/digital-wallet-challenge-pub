@@ -1,0 +1,44 @@
+# Configuracoes locais dos agentes
+/AGENTS.md
+/AGENTS.MD
+/CLAUDE.md
+/CLAUDE.MD
+
+# Planejamento e materiais privados
+/private/
+/docs/SPEC.md
+/docs/PLAN.md
+/docs/TASKS.md
+/descricao_vaga.txt
+/proposta_entrega_wallet.html
+
+# Ambiente e segredos
+/.env
+/.env.*
+!/.env.example
+/auth.json
+*.key
+*.pem
+
+# Dependencias e artefatos de build
+/vendor/
+/node_modules/
+/public/build/
+/public/hot
+/public/storage
+
+# Arquivos gerados durante execucao e testes
+*.log
+/.phpunit.cache/
+/.phpunit.result.cache
+/coverage/
+/storage/*.key
+/storage/framework/cache/data/
+/database/*.sqlite
+
+# IDE e sistema operacional
+/.idea/
+/.vscode/
+/.fleet/
+.DS_Store
+Thumbs.db
