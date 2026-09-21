@@ -42,3 +42,13 @@
 /.fleet/
 .DS_Store
 Thumbs.db
+
+# Artefatos do Laravel
+/.nova/
+/.zed/
+.phpactor.json
+/storage/pail/
+/.env.backup
+/.env.production
+Homestead.json
+Homestead.yaml
