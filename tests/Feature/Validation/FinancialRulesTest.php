@@ -16,7 +16,7 @@ function validateFinancialInput(array $data): Illuminate\Validation\Validator
     ], FinancialRules::messages());
 }
 
-it('approves a well formed operation', function () {
+test('aprova uma operação bem formada', function () {
     $validator = validateFinancialInput([
         'amount' => '1.000,50',
         'idempotency_key' => (string) Str::uuid7(),
@@ -25,7 +25,7 @@ it('approves a well formed operation', function () {
     expect($validator->passes())->toBeTrue();
 });
 
-it('complains in portuguese when the fields are missing', function () {
+test('reclama em português quando os campos faltam', function () {
     $validator = validateFinancialInput([]);
 
     expect($validator->fails())->toBeTrue()
@@ -34,7 +34,7 @@ it('complains in portuguese when the fields are missing', function () {
         ->toBe('Não foi possível confirmar a operação. Recarregue a página e tente de novo.');
 });
 
-it('complains about the amount format using the money rule', function () {
+test('reclama do formato do valor usando a regra de dinheiro', function () {
     $validator = validateFinancialInput([
         'amount' => '1000.50',
         'idempotency_key' => (string) Str::uuid7(),
@@ -45,7 +45,7 @@ it('complains about the amount format using the money rule', function () {
         ->toBe('Informe um valor entre R$ 0,01 e R$ 1.000.000,00, no formato 1.000,50.');
 });
 
-it('refuses an idempotency key that is not a uuid', function () {
+test('recusa chave de idempotência que não é UUID', function () {
     $validator = validateFinancialInput([
         'amount' => '10,50',
         'idempotency_key' => 'chave-qualquer',

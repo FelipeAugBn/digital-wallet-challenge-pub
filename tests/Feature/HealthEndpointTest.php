@@ -1,5 +1,5 @@
 <?php
 
-it('answers the health endpoint', function () {
+test('responde no endpoint de saúde', function () {
     $this->get('/up')->assertOk();
 });

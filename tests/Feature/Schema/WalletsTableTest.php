@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Schema;
 
 require_once __DIR__.'/helpers.php';
 
-it('has the expected columns', function () {
+test('tem as colunas esperadas', function () {
     expect(Schema::hasTable('wallets'))->toBeTrue()
         ->and(Schema::hasColumns('wallets', ['id', 'user_id', 'balance', 'created_at', 'updated_at']))->toBeTrue();
 });
 
-it('stores the balance as a signed bigint defaulting to zero', function () {
+test('guarda o saldo como bigint com sinal e padrão zero', function () {
     $column = DB::selectOne(
         'select data_type, column_default from information_schema.columns where table_name = ? and column_name = ?',
         ['wallets', 'balance']
@@ -27,7 +27,7 @@ it('stores the balance as a signed bigint defaulting to zero', function () {
     expect($wallet->fresh()->balance)->toBe(-250);
 });
 
-it('refuses a second wallet for the same user at the database level', function () {
+test('recusa uma segunda carteira para o mesmo usuário no nível do banco', function () {
     $user = User::factory()->create();
     Wallet::create(['user_id' => $user->id]);
 
@@ -40,7 +40,7 @@ it('refuses a second wallet for the same user at the database level', function (
     expect(Wallet::where('user_id', $user->id)->count())->toBe(1);
 });
 
-it('refuses to delete a user that still owns a wallet', function () {
+test('recusa apagar usuário que ainda tem carteira', function () {
     $user = User::factory()->create();
     $wallet = Wallet::create(['user_id' => $user->id]);
 

@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 
 require_once __DIR__.'/helpers.php';
 
-it('gives back the original transaction when the same request arrives twice', function () {
+test('devolve a transação original quando o mesmo pedido chega duas vezes', function () {
     $user = userWithWallet();
     $key = (string) Str::uuid7();
 
@@ -26,7 +26,7 @@ it('gives back the original transaction when the same request arrives twice', fu
         ->and(walletOf($user)->balance)->toBe(1_000);
 });
 
-it('walks the real unique violation when the key is already persisted', function () {
+test('percorre a violação de unicidade real quando a chave já está gravada', function () {
     $user = userWithWallet();
     $key = (string) Str::uuid7();
 
@@ -42,7 +42,7 @@ it('walks the real unique violation when the key is already persisted', function
         ->and(walletOf($user)->balance)->toBe(0);
 });
 
-it('answers a replay through the web with the same redirect and message', function () {
+test('responde à repetição pela web com o mesmo redirect e a mesma mensagem', function () {
     $user = userWithWallet();
     $key = (string) Str::uuid7();
     $payload = ['amount' => '10,00', 'idempotency_key' => $key];
@@ -58,7 +58,7 @@ it('answers a replay through the web with the same redirect and message', functi
         ->and(walletOf($user)->balance)->toBe(1_000);
 });
 
-it('refuses the same key with a different amount', function () {
+test('recusa a mesma chave com valor diferente', function () {
     $user = userWithWallet();
     $key = (string) Str::uuid7();
 
@@ -70,7 +70,7 @@ it('refuses the same key with a different amount', function () {
         ->and(walletOf($user)->balance)->toBe(1_000);
 });
 
-it('refuses the same key when the persisted operation is of another type', function () {
+test('recusa a mesma chave quando a operação gravada é de outro tipo', function () {
     $user = userWithWallet();
     $outro = userWithWallet();
     $key = (string) Str::uuid7();
@@ -89,7 +89,7 @@ it('refuses the same key when the persisted operation is of another type', funct
     expect(Transaction::count())->toBe(1);
 });
 
-it('refuses the same key when the persisted destination is another wallet', function () {
+test('recusa a mesma chave quando o destino gravado é outra carteira', function () {
     $user = userWithWallet();
     $outro = userWithWallet();
     $key = (string) Str::uuid7();
@@ -104,7 +104,7 @@ it('refuses the same key when the persisted destination is another wallet', func
     expect(Transaction::count())->toBe(1);
 });
 
-it('shows the conflict on screen without leaking any database detail', function () {
+test('mostra o conflito na tela sem vazar detalhe do banco', function () {
     $user = userWithWallet();
     $key = (string) Str::uuid7();
 
@@ -128,7 +128,7 @@ it('shows the conflict on screen without leaking any database detail', function 
         ->not->toContain('value="'.$key.'"');
 });
 
-it('lets two people use the very same key', function () {
+test('permite que duas pessoas usem exatamente a mesma chave', function () {
     $key = (string) Str::uuid7();
     $ana = userWithWallet();
     $bia = userWithWallet();
@@ -142,7 +142,7 @@ it('lets two people use the very same key', function () {
         ->and(walletOf($bia)->balance)->toBe(2_500);
 });
 
-it('rethrows a unique violation that comes from another constraint', function () {
+test('relança violação de unicidade vinda de outra constraint', function () {
     $user = userWithWallet();
     $key = (string) Str::uuid7();
 
@@ -168,7 +168,7 @@ it('rethrows a unique violation that comes from another constraint', function ()
     expect($chamada)->toThrow(QueryException::class);
 });
 
-it('rethrows when the key conflict has nothing persisted for this person', function () {
+test('relança quando o conflito de chave não tem nada gravado para essa pessoa', function () {
     $ana = userWithWallet();
     $bia = userWithWallet();
     $key = (string) Str::uuid7();

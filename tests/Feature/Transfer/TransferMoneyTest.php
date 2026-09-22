@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Event;
 
 require_once __DIR__.'/helpers.php';
 
-it('creates one transaction and the two entries that belong to it', function () {
+test('cria uma transação e os dois lançamentos que pertencem a ela', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
 
@@ -30,7 +30,7 @@ it('creates one transaction and the two entries that belong to it', function () 
         ->and((int) $transaction->destination_wallet_id)->toBe(walletOf($bia)->id);
 });
 
-it('writes a debit on the sender and a credit on the recipient', function () {
+test('grava um débito no remetente e um crédito no destinatário', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet(1_000);
 
@@ -49,7 +49,7 @@ it('writes a debit on the sender and a credit on the recipient', function () {
         ->and($credito->transaction_id)->toBe($transaction->id);
 });
 
-it('records the debit before the credit', function () {
+test('registra o débito antes do crédito', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
 
@@ -59,7 +59,7 @@ it('records the debit before the credit', function () {
         ->toBe([WalletEntryType::Debit, WalletEntryType::Credit]);
 });
 
-it('updates both balances in the same operation', function () {
+test('atualiza os dois saldos na mesma operação', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet(1_000);
 
@@ -69,7 +69,7 @@ it('updates both balances in the same operation', function () {
         ->and(walletOf($bia)->balance)->toBe(4_000);
 });
 
-it('accepts a balance that is exactly the amount and leaves zero behind', function () {
+test('aceita saldo exatamente igual ao valor e deixa zero', function () {
     $ana = userWithWallet(3_000);
     $bia = userWithWallet();
 
@@ -80,7 +80,7 @@ it('accepts a balance that is exactly the amount and leaves zero behind', functi
         ->and(walletOf($bia)->balance)->toBe(3_000);
 });
 
-it('refuses one cent more than the balance and changes nothing', function () {
+test('recusa um centavo a mais que o saldo e não altera nada', function () {
     $ana = userWithWallet(3_000);
     $bia = userWithWallet(500);
 
@@ -92,7 +92,7 @@ it('refuses one cent more than the balance and changes nothing', function () {
         ->and(walletOf($bia)->balance)->toBe(500);
 });
 
-it('credits a recipient whose balance is negative', function () {
+test('credita destinatário com saldo negativo', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet(-2_000);
 
@@ -102,7 +102,7 @@ it('credits a recipient whose balance is negative', function () {
         ->and(WalletEntry::query()->where('wallet_id', walletOf($bia)->id)->sole()->balance_after)->toBe(1_000);
 });
 
-it('refuses a recipient that nobody uses', function () {
+test('recusa destinatário que não pertence a ninguém', function () {
     $ana = userWithWallet(5_000);
 
     expect(fn () => transfer($ana, 'ninguem@exemplo.com', '30,00'))->toThrow(RecipientNotFound::class);
@@ -112,7 +112,7 @@ it('refuses a recipient that nobody uses', function () {
         ->and(walletOf($ana)->balance)->toBe(5_000);
 });
 
-it('refuses a transfer to the sender own wallet', function () {
+test('recusa transferência para a própria carteira do remetente', function () {
     $ana = userWithWallet(5_000);
 
     expect(fn () => transfer($ana, $ana, '30,00'))->toThrow(TransferToSelf::class);
@@ -122,7 +122,7 @@ it('refuses a transfer to the sender own wallet', function () {
         ->and(walletOf($ana)->balance)->toBe(5_000);
 });
 
-it('inserts the transaction before taking the first lock', function () {
+test('insere a transação antes do primeiro lock', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
 
@@ -153,7 +153,7 @@ it('inserts the transaction before taking the first lock', function () {
         ->and($queries[$lock])->toContain('from "wallets"');
 });
 
-it('locks both wallets from the smaller id to the bigger one', function (bool $origemMaior) {
+test('bloqueia as duas carteiras do menor ID para o maior', function (bool $origemMaior) {
     // A ordem de criacao decide os identificadores, entao o mesmo cenario roda
     // com a origem dos dois lados e a ordem dos locks nao pode mudar.
     if ($origemMaior) {
@@ -181,11 +181,11 @@ it('locks both wallets from the smaller id to the bigger one', function (bool $o
     expect($origem > $destino)->toBe($origemMaior)
         ->and($locks)->toBe($crescente);
 })->with([
-    'origem com id menor' => false,
-    'origem com id maior' => true,
+    'origem com ID menor' => false,
+    'origem com ID maior' => true,
 ]);
 
-it('undoes transaction, both entries and both balances when the last step fails', function () {
+test('desfaz transação, os dois lançamentos e os dois saldos quando o último passo falha', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet(1_000);
     $destino = walletOf($bia)->id;

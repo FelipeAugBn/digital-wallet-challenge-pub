@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 require_once __DIR__.'/helpers.php';
 
-it('has the expected columns', function () {
+test('tem as colunas esperadas', function () {
     expect(Schema::hasTable('transactions'))->toBeTrue()
         ->and(Schema::hasColumns('transactions', [
             'id',
@@ -25,7 +25,7 @@ it('has the expected columns', function () {
         ]))->toBeTrue();
 });
 
-it('uses the postgresql types the spec requires', function () {
+test('usa os tipos do PostgreSQL que a especificação exige', function () {
     $types = DB::table('information_schema.columns')
         ->where('table_name', 'transactions')
         ->pluck('data_type', 'column_name');
@@ -38,7 +38,7 @@ it('uses the postgresql types the spec requires', function () {
         ->and($types['status'])->toBe('character varying');
 });
 
-it('refuses an amount of zero or less', function () {
+test('recusa valor zero ou negativo', function () {
     $user = User::factory()->create();
 
     foreach ([0, -1] as $amount) {
@@ -51,7 +51,7 @@ it('refuses an amount of zero or less', function () {
     expect(DB::table('transactions')->count())->toBe(0);
 });
 
-it('refuses a deposit or a transfer without an initiator', function () {
+test('recusa depósito ou transferência sem quem iniciou', function () {
     foreach (['deposit', 'transfer'] as $type) {
         expectConstraintViolation('23514', fn () => insertTransaction([
             'type' => $type,
@@ -62,7 +62,7 @@ it('refuses a deposit or a transfer without an initiator', function () {
     expect(DB::table('transactions')->count())->toBe(0);
 });
 
-it('accepts a reversal without an initiator', function () {
+test('aceita estorno sem quem iniciou', function () {
     $id = insertTransaction([
         'type' => 'reversal',
         'initiated_by_user_id' => null,
@@ -72,7 +72,7 @@ it('accepts a reversal without an initiator', function () {
     expect(DB::table('transactions')->where('id', $id)->exists())->toBeTrue();
 });
 
-it('refuses values outside the enums', function () {
+test('recusa valores fora dos enums', function () {
     $user = User::factory()->create();
 
     $invalid = [
@@ -90,7 +90,7 @@ it('refuses values outside the enums', function () {
     expect(DB::table('transactions')->count())->toBe(0);
 });
 
-it('refuses two reversals pointing at the same original transaction', function () {
+test('recusa dois estornos apontando para a mesma transação original', function () {
     $user = User::factory()->create();
     $original = insertTransaction(['initiated_by_user_id' => $user->id]);
 
@@ -109,7 +109,7 @@ it('refuses two reversals pointing at the same original transaction', function (
     expect(DB::table('transactions')->where('original_transaction_id', $original)->count())->toBe(1);
 });
 
-it('refuses the same idempotency key for the same user', function () {
+test('recusa a mesma chave de idempotência para o mesmo usuário', function () {
     $user = User::factory()->create();
     $key = (string) Str::uuid();
 
@@ -123,7 +123,7 @@ it('refuses the same idempotency key for the same user', function () {
     expect(DB::table('transactions')->where('idempotency_key', $key)->count())->toBe(1);
 });
 
-it('accepts the same idempotency key for different users', function () {
+test('aceita a mesma chave de idempotência para usuários diferentes', function () {
     $key = (string) Str::uuid();
 
     foreach (User::factory()->count(2)->create() as $user) {
@@ -133,7 +133,7 @@ it('accepts the same idempotency key for different users', function () {
     expect(DB::table('transactions')->where('idempotency_key', $key)->count())->toBe(2);
 });
 
-it('accepts many rows without an idempotency key', function () {
+test('aceita várias linhas sem chave de idempotência', function () {
     $user = User::factory()->create();
 
     insertTransaction(['initiated_by_user_id' => $user->id, 'idempotency_key' => null]);
@@ -142,7 +142,7 @@ it('accepts many rows without an idempotency key', function () {
     expect(DB::table('transactions')->whereNull('idempotency_key')->count())->toBe(2);
 });
 
-it('keeps the idempotency index unique, partial and scoped to the user', function () {
+test('mantém o índice de idempotência único, parcial e por usuário', function () {
     $definition = DB::table('pg_indexes')
         ->where('indexname', 'transactions_user_idempotency_key_unique')
         ->value('indexdef');
@@ -152,7 +152,7 @@ it('keeps the idempotency index unique, partial and scoped to the user', functio
         ->and($definition)->toContain('WHERE (idempotency_key IS NOT NULL)');
 });
 
-it('indexes the columns used to look transactions up', function () {
+test('indexa as colunas usadas para procurar transações', function () {
     $indexes = DB::table('pg_indexes')
         ->where('tablename', 'transactions')
         ->pluck('indexdef', 'indexname');
@@ -162,7 +162,7 @@ it('indexes the columns used to look transactions up', function () {
         ->and($indexes['transactions_destination_wallet_id_index'])->toContain('(destination_wallet_id)');
 });
 
-it('refuses to delete anything a transaction still points at', function () {
+test('recusa apagar qualquer coisa para a qual uma transação ainda aponta', function () {
     $wallet = createWallet();
     $other = createWallet();
 

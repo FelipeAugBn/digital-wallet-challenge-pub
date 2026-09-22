@@ -2,7 +2,7 @@
 
 use App\Support\Money;
 
-it('converts the accepted brazilian formats to cents', function (string $input, int $cents) {
+test('converte os formatos brasileiros aceitos em centavos', function (string $input, int $cents) {
     expect(Money::fromInput($input)->cents())->toBe($cents);
 })->with([
     ['0,01', 1],
@@ -14,56 +14,56 @@ it('converts the accepted brazilian formats to cents', function (string $input, 
     ['1.000.000,00', 100_000_000],
 ]);
 
-it('ignores spaces around the value', function (string $input) {
+test('ignora espaços em volta do valor', function (string $input) {
     expect(Money::fromInput($input)->cents())->toBe(1_050);
 })->with([' 10,50', '10,50 ', "  10,50\t"]);
 
-it('rejects values that are not valid money input', function (string $input) {
+test('recusa valores que não são entrada monetária válida', function (string $input) {
     expect(Money::tryFromInput($input))->toBeNull();
 })->with([
     'vazio' => '',
-    'so espacos' => '   ',
+    'só espaços' => '   ',
     'zero' => '0',
     'zero com centavos' => '0,00',
     'negativo' => '-10',
     'negativo com centavos' => '-10,50',
-    'simbolo antes' => 'R$ 10,00',
-    'simbolo depois' => '10,00 R$',
+    'símbolo antes' => 'R$ 10,00',
+    'símbolo depois' => '10,00 R$',
     'letras' => 'abc',
-    'letra junto do numero' => '10a',
+    'letra junto do número' => '10a',
     'decimal americano' => '1000.50',
     'ponto como decimal' => '1.00',
     'grupo de milhar errado' => '1.0000,00',
     'separadores invertidos' => '1,000.50',
-    'tres casas decimais' => '10,505',
-    'virgula sem centavos' => '10,',
-    'virgula no inicio' => ',50',
-    'ponto no inicio' => '.50',
+    'três casas decimais' => '10,505',
+    'vírgula sem centavos' => '10,',
+    'vírgula no início' => ',50',
+    'ponto no início' => '.50',
     'ponto duplicado' => '1..000,50',
-    'espaco no meio' => '1 000,50',
+    'espaço no meio' => '1 000,50',
 ]);
 
-it('accepts exactly the operation limit and refuses one cent above it', function () {
+test('aceita exatamente o limite da operação e recusa um centavo acima', function () {
     expect(Money::MAX_INPUT_CENTS)->toBe(100_000_000)
         ->and(Money::fromInput('1.000.000,00')->cents())->toBe(100_000_000)
         ->and(Money::tryFromInput('1.000.000,01'))->toBeNull()
         ->and(Money::tryFromInput('2.000.000,00'))->toBeNull();
 });
 
-it('refuses a number long enough to overflow the integer', function () {
+test('recusa número grande o bastante para estourar o inteiro', function () {
     expect(Money::tryFromInput('99999999999999999999,99'))->toBeNull();
 });
 
-it('throws when the input reaches fromInput already invalid', function () {
+test('lança exceção quando a entrada chega inválida no fromInput', function () {
     Money::fromInput('1000.50');
 })->throws(InvalidArgumentException::class);
 
-it('accepts zero and negative amounts when built from cents', function () {
+test('aceita zero e valores negativos quando criado a partir de centavos', function () {
     expect(Money::fromCents(0)->cents())->toBe(0)
         ->and(Money::fromCents(-5_000)->cents())->toBe(-5_000);
 });
 
-it('formats amounts in the brazilian notation', function (int $cents, string $formatted) {
+test('formata valores na notação brasileira', function (int $cents, string $formatted) {
     expect(Money::fromCents($cents)->format())->toBe($formatted);
 })->with([
     [0, 'R$ 0,00'],
@@ -77,19 +77,19 @@ it('formats amounts in the brazilian notation', function (int $cents, string $fo
     [PHP_INT_MIN, '-R$ 92.233.720.368.547.758,08'],
 ]);
 
-it('adds and subtracts amounts', function () {
+test('soma e subtrai valores', function () {
     expect(Money::fromCents(1_000)->plus(Money::fromCents(500))->cents())->toBe(1_500)
         ->and(Money::fromCents(1_000)->minus(Money::fromCents(400))->cents())->toBe(600);
 });
 
-it('lets a subtraction end up negative, as a reversal does', function () {
+test('permite que uma subtração termine negativa, como num estorno', function () {
     $result = Money::fromCents(3_000)->minus(Money::fromCents(8_000));
 
     expect($result->cents())->toBe(-5_000)
         ->and($result->format())->toBe('-R$ 50,00');
 });
 
-it('never changes the instances used in an operation', function () {
+test('nunca altera as instâncias usadas numa operação', function () {
     $balance = Money::fromCents(1_000);
     $deposit = Money::fromCents(500);
 
@@ -100,7 +100,7 @@ it('never changes the instances used in an operation', function () {
         ->and($result)->not->toBe($balance);
 });
 
-it('keeps the cents property readonly and the class final', function () {
+test('mantém a propriedade de centavos somente leitura e a classe final', function () {
     $reflection = new ReflectionClass(Money::class);
 
     expect($reflection->isFinal())->toBeTrue()
@@ -108,11 +108,11 @@ it('keeps the cents property readonly and the class final', function () {
         ->and($reflection->getConstructor()->isPrivate())->toBeTrue();
 });
 
-it('exposes the cents as a real integer', function () {
+test('expõe os centavos como inteiro de verdade', function () {
     expect(Money::fromInput('1.000,50')->cents())->toBeInt();
 });
 
-it('has no floating point arithmetic in its source, comments apart', function () {
+test('não tem aritmética de ponto flutuante no código-fonte, comentários à parte', function () {
     $path = dirname(__DIR__, 3).'/app/Support/Money.php';
     $code = '';
 

@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 require_once __DIR__.'/helpers.php';
 
-it('gives back the original transfer when the same request arrives twice', function () {
+test('devolve a transferência original quando o mesmo pedido chega duas vezes', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
     $key = (string) Str::uuid7();
@@ -25,7 +25,7 @@ it('gives back the original transfer when the same request arrives twice', funct
         ->and(walletOf($bia)->balance)->toBe(3_000);
 });
 
-it('walks the real unique violation when the key is already persisted', function () {
+test('percorre a violação de unicidade real quando a chave já está gravada', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
     $key = (string) Str::uuid7();
@@ -48,7 +48,7 @@ it('walks the real unique violation when the key is already persisted', function
         ->and(walletOf($bia)->balance)->toBe(0);
 });
 
-it('answers a replay through the web with the same redirect and message', function () {
+test('responde à repetição pela web com o mesmo redirect e a mesma mensagem', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
     $payload = [
@@ -70,7 +70,7 @@ it('answers a replay through the web with the same redirect and message', functi
         ->and(walletOf($bia)->balance)->toBe(3_000);
 });
 
-it('refuses the same key when only the amount is different', function () {
+test('recusa a mesma chave quando só o valor é diferente', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
     $key = (string) Str::uuid7();
@@ -84,7 +84,7 @@ it('refuses the same key when only the amount is different', function () {
         ->and(walletOf($ana)->balance)->toBe(2_000);
 });
 
-it('refuses the same key when only the recipient is different', function () {
+test('recusa a mesma chave quando só o destinatário é diferente', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
     $carol = userWithWallet();
@@ -98,7 +98,7 @@ it('refuses the same key when only the recipient is different', function () {
         ->and(walletOf($carol)->balance)->toBe(0);
 });
 
-it('refuses the same key when only the type is different', function () {
+test('recusa a mesma chave quando só o tipo é diferente', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
     $key = (string) Str::uuid7();
@@ -118,7 +118,7 @@ it('refuses the same key when only the type is different', function () {
         ->and(walletOf($ana)->balance)->toBe(5_000);
 });
 
-it('lets two senders use the very same key', function () {
+test('permite que dois remetentes usem exatamente a mesma chave', function () {
     $key = (string) Str::uuid7();
     $ana = userWithWallet(5_000);
     $bia = userWithWallet(5_000);
@@ -134,7 +134,7 @@ it('lets two senders use the very same key', function () {
         ->and(walletOf($carol)->balance)->toBe(4_000);
 });
 
-it('frees the key again when the attempt was rolled back for lack of balance', function () {
+test('libera a chave de novo quando a tentativa sofreu rollback por falta de saldo', function () {
     $ana = userWithWallet(1_000);
     $bia = userWithWallet();
     $key = (string) Str::uuid7();

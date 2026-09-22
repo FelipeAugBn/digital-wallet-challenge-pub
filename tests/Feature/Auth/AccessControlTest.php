@@ -2,17 +2,17 @@
 
 use App\Models\User;
 
-it('sends a visitor from the dashboard to the login page', function () {
+test('manda o visitante do painel para a tela de login', function () {
     $this->get(route('dashboard'))->assertRedirect(route('login'));
 });
 
-it('lets an authenticated user reach the dashboard', function () {
+test('permite que quem está autenticado abra o painel', function () {
     $this->actingAs(User::factory()->create())
         ->get(route('dashboard'))
         ->assertOk();
 });
 
-it('keeps an authenticated user away from the guest pages', function () {
+test('mantém quem está autenticado longe das telas de visitante', function () {
     $this->actingAs(User::factory()->create());
 
     $this->get(route('login'))->assertRedirect(route('dashboard'));

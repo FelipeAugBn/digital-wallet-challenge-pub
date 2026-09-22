@@ -27,7 +27,7 @@ function makeTransaction(array $attributes = []): Transaction
     ], $attributes));
 }
 
-it('generates the identifier on the server as a version 7 uuid', function () {
+test('gera o identificador no servidor como UUID versão 7', function () {
     $transaction = makeTransaction();
 
     expect($transaction->id)->toMatch('/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/')
@@ -35,7 +35,7 @@ it('generates the identifier on the server as a version 7 uuid', function () {
         ->and($transaction->getIncrementing())->toBeFalse();
 });
 
-it('ignores an identifier coming from the outside', function () {
+test('ignora identificador que vem de fora', function () {
     $chosen = (string) Str::uuid7();
 
     $transaction = makeTransaction(['id' => $chosen]);
@@ -44,7 +44,7 @@ it('ignores an identifier coming from the outside', function () {
         ->and($transaction->id)->not->toBe($chosen);
 });
 
-it('generates identifiers that sort in the order they were created', function () {
+test('gera identificadores que ordenam na ordem de criação', function () {
     $ids = [];
 
     for ($i = 0; $i < 3; $i++) {
@@ -58,7 +58,7 @@ it('generates identifiers that sort in the order they were created', function ()
     expect($sorted)->toBe($ids);
 });
 
-it('casts the transaction columns back into enums and integers', function () {
+test('converte as colunas da transação de volta em enums e inteiros', function () {
     $original = makeTransaction();
 
     $reversal = makeTransaction([
@@ -80,7 +80,7 @@ it('casts the transaction columns back into enums and integers', function () {
         ->and(makeTransaction()->fresh()->reversal_reason)->toBeNull();
 });
 
-it('links a transaction to its people, wallets and reversal', function () {
+test('liga a transação às pessoas, às carteiras e ao estorno', function () {
     $source = createWallet();
     $destination = createWallet();
 
@@ -107,7 +107,7 @@ it('links a transaction to its people, wallets and reversal', function () {
         ->and($destination->incomingTransactions->pluck('id')->all())->toBe([$original->id]);
 });
 
-it('casts the entry columns and links it to the transaction and the wallet', function () {
+test('converte as colunas do lançamento e o liga à transação e à carteira', function () {
     $wallet = createWallet();
     $transaction = makeTransaction([
         'initiated_by_user_id' => $wallet->user_id,
@@ -131,7 +131,7 @@ it('casts the entry columns and links it to the transaction and the wallet', fun
         ->and($wallet->entries)->toHaveCount(1);
 });
 
-it('keeps the php enums and the database checks in sync', function () {
+test('mantém os enums do PHP e os checks do banco em sincronia', function () {
     $checks = fn (string $table) => DB::table('pg_constraint')
         ->selectRaw('conname, pg_get_constraintdef(oid) as definition')
         ->whereRaw('conrelid = ?::regclass', [$table])

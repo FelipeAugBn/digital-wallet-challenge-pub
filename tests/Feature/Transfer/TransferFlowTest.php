@@ -6,7 +6,7 @@ use Illuminate\Support\Str;
 
 require_once __DIR__.'/helpers.php';
 
-it('keeps a visitor away from both the form and the submission', function () {
+test('mantém o visitante fora do formulário e do envio', function () {
     $this->get(route('transfers.create'))->assertRedirect(route('login'));
 
     $this->post(route('transfers.store'), [
@@ -17,7 +17,7 @@ it('keeps a visitor away from both the form and the submission', function () {
     expect(Transaction::count())->toBe(0);
 });
 
-it('serves a form with csrf and a server made key', function () {
+test('entrega o formulário com CSRF e chave gerada no servidor', function () {
     $response = $this->actingAs(userWithWallet())->get(route('transfers.create'));
 
     $response->assertOk();
@@ -29,7 +29,7 @@ it('serves a form with csrf and a server made key', function () {
         ->and(hiddenKey($response->getContent()))->toMatch(UUID_V7);
 });
 
-it('gives a different key to each visit of the form', function () {
+test('dá uma chave diferente a cada visita ao formulário', function () {
     $this->actingAs(userWithWallet());
 
     $primeira = hiddenKey($this->get(route('transfers.create'))->getContent());
@@ -38,7 +38,7 @@ it('gives a different key to each visit of the form', function () {
     expect($primeira)->not->toBe($segunda);
 });
 
-it('keeps a valid key when the form comes back with an error', function () {
+test('mantém a chave válida quando o formulário volta com erro', function () {
     $key = (string) Str::uuid7();
 
     $this->actingAs(userWithWallet())
@@ -55,7 +55,7 @@ it('keeps a valid key when the form comes back with an error', function () {
     expect(hiddenKey($this->get(route('transfers.create'))->getContent()))->toBe($key);
 });
 
-it('replaces a key that did not come back as a uuid', function (string $enviada) {
+test('substitui a chave que não voltou como UUID', function (string $enviada) {
     $this->actingAs(userWithWallet())
         ->from(route('transfers.create'))
         ->post(route('transfers.store'), [
@@ -72,10 +72,10 @@ it('replaces a key that did not come back as a uuid', function (string $enviada)
 })->with([
     'texto qualquer' => 'chave-qualquer',
     'vazia' => '',
-    'quase um uuid' => '0199c0ff-ee00-7000-8000-00000000000',
+    'quase um UUID' => '0199c0ff-ee00-7000-8000-00000000000',
 ]);
 
-it('refuses a submission that carries no key at all', function () {
+test('recusa envio que não traz chave nenhuma', function () {
     $this->actingAs(userWithWallet())
         ->from(route('transfers.create'))
         ->post(route('transfers.store'), [
@@ -88,7 +88,7 @@ it('refuses a submission that carries no key at all', function () {
         ->and(hiddenKey($this->get(route('transfers.create'))->getContent()))->toMatch(UUID_V7);
 });
 
-it('refuses an invalid recipient email with a message and no transaction', function (string $email) {
+test('recusa e-mail de destinatário inválido com mensagem e sem criar transação', function (string $email) {
     $ana = userWithWallet(5_000);
 
     $response = $this->actingAs($ana)
@@ -105,7 +105,7 @@ it('refuses an invalid recipient email with a message and no transaction', funct
         ->and(walletOf($ana)->balance)->toBe(5_000);
 })->with(['', 'sem-arroba', 'pessoa@', '@exemplo.com', 'pessoa exemplo@teste.com']);
 
-it('refuses an invalid amount with a message and no transaction', function (string $amount) {
+test('recusa valor inválido com mensagem e sem criar transação', function (string $amount) {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
 
@@ -123,7 +123,7 @@ it('refuses an invalid amount with a message and no transaction', function (stri
         ->and(walletOf($ana)->balance)->toBe(5_000);
 })->with(['', '0', '-10', '1000.50', '10,505', '1.000.000,01', 'abc']);
 
-it('refuses a key that is not a uuid', function () {
+test('recusa chave que não é UUID', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
 
@@ -140,7 +140,7 @@ it('refuses a key that is not a uuid', function () {
         ->and(walletOf($ana)->balance)->toBe(5_000);
 });
 
-it('shows a recipient that does not exist on the email field and changes nothing', function () {
+test('mostra destinatário inexistente no campo de e-mail e não altera nada', function () {
     $ana = userWithWallet(5_000);
 
     $response = $this->actingAs($ana)
@@ -159,7 +159,7 @@ it('shows a recipient that does not exist on the email field and changes nothing
         ->and(walletOf($ana)->balance)->toBe(5_000);
 });
 
-it('shows a transfer to yourself on the email field and changes nothing', function () {
+test('mostra transferência para si mesmo no campo de e-mail e não altera nada', function () {
     $ana = userWithWallet(5_000);
 
     $response = $this->actingAs($ana)
@@ -178,7 +178,7 @@ it('shows a transfer to yourself on the email field and changes nothing', functi
         ->and(walletOf($ana)->balance)->toBe(5_000);
 });
 
-it('shows a missing balance on the amount field and changes nothing', function () {
+test('mostra saldo insuficiente no campo de valor e não altera nada', function () {
     $ana = userWithWallet(1_000);
     $bia = userWithWallet(500);
 
@@ -199,7 +199,7 @@ it('shows a missing balance on the amount field and changes nothing', function (
         ->and(walletOf($bia)->balance)->toBe(500);
 });
 
-it('keeps database detail out of the screen when a refusal happens', function () {
+test('mantém detalhe do banco fora da tela quando há uma recusa', function () {
     $ana = userWithWallet(1_000);
     $bia = userWithWallet();
 
@@ -222,7 +222,7 @@ it('keeps database detail out of the screen when a refusal happens', function ()
         ->not->toContain('wallet_id');
 });
 
-it('answers a successful transfer with a redirect and a message', function () {
+test('responde à transferência bem-sucedida com redirect e mensagem', function () {
     $ana = userWithWallet(500_000);
     $bia = userWithWallet();
 
@@ -241,7 +241,7 @@ it('answers a successful transfer with a redirect and a message', function () {
         ->and(walletOf($bia)->balance)->toBe(100_050);
 });
 
-it('does not transfer again when the page after the redirect is reloaded', function () {
+test('não transfere de novo quando a página do redirect é recarregada', function () {
     $ana = userWithWallet(5_000);
     $bia = userWithWallet();
 
@@ -262,7 +262,7 @@ it('does not transfer again when the page after the redirect is reloaded', funct
         ->and(walletOf($bia)->balance)->toBe(3_000);
 });
 
-it('reaches the transfer form from the dashboard', function () {
+test('chega ao formulário de transferência pelo painel', function () {
     $this->actingAs(userWithWallet())
         ->get(route('dashboard'))
         ->assertOk()

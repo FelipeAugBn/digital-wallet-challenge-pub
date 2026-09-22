@@ -21,13 +21,13 @@ function validRegistration(array $overrides = []): array
     ], $overrides);
 }
 
-it('shows the registration form to a visitor', function () {
+test('mostra o formulário de cadastro para o visitante', function () {
     $this->get(route('register'))
         ->assertOk()
         ->assertSee('name="_token"', false);
 });
 
-it('creates the user and the wallet together', function () {
+test('cria o usuário e a carteira juntos', function () {
     $this->post(route('register'), validRegistration());
 
     expect(User::count())->toBe(1)
@@ -39,14 +39,14 @@ it('creates the user and the wallet together', function () {
         ->and($wallet->balance)->toBe(0);
 });
 
-it('signs the new user in and redirects to the dashboard', function () {
+test('autentica quem acabou de se cadastrar e redireciona para o painel', function () {
     $this->post(route('register'), validRegistration())
         ->assertRedirect(route('dashboard'));
 
     $this->assertAuthenticatedAs(User::first());
 });
 
-it('stores the password hashed', function () {
+test('guarda a senha com hash', function () {
     $this->post(route('register'), validRegistration());
 
     $user = User::first();
@@ -55,7 +55,7 @@ it('stores the password hashed', function () {
         ->and(Hash::check('senha-bem-segura', $user->password))->toBeTrue();
 });
 
-it('rejects a password shorter than eight characters', function () {
+test('recusa senha com menos de oito caracteres', function () {
     $this->post(route('register'), validRegistration([
         'password' => 'curta',
         'password_confirmation' => 'curta',
@@ -64,7 +64,7 @@ it('rejects a password shorter than eight characters', function () {
     expect(User::count())->toBe(0);
 });
 
-it('rejects a confirmation that does not match the password', function () {
+test('recusa confirmação diferente da senha', function () {
     $this->post(route('register'), validRegistration([
         'password_confirmation' => 'outra-senha-segura',
     ]))->assertSessionHasErrors('password');
@@ -72,7 +72,7 @@ it('rejects a confirmation that does not match the password', function () {
     expect(User::count())->toBe(0);
 });
 
-it('rejects an email that is already registered', function () {
+test('recusa e-mail já cadastrado', function () {
     $this->post(route('register'), validRegistration());
     $this->post(route('register'), validRegistration(['name' => 'Outra pessoa']));
 
@@ -80,7 +80,7 @@ it('rejects an email that is already registered', function () {
         ->and(Wallet::count())->toBe(1);
 });
 
-it('discards the user when the wallet cannot be created', function () {
+test('descarta o usuário quando a carteira não pode ser criada', function () {
     $this->app->bind(CreateWallet::class, fn () => new class extends CreateWallet
     {
         /** Falha sempre, para provar que a transacao desfaz o usuario. */

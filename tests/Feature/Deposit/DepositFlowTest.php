@@ -5,14 +5,14 @@ use Illuminate\Support\Str;
 
 require_once __DIR__.'/helpers.php';
 
-it('keeps a visitor away from both the form and the submission', function () {
+test('mantém o visitante fora do formulário e do envio', function () {
     $this->get(route('deposits.create'))->assertRedirect(route('login'));
     $this->post(route('deposits.store'), ['amount' => '10,00'])->assertRedirect(route('login'));
 
     expect(Transaction::count())->toBe(0);
 });
 
-it('serves a form with csrf and a server made key', function () {
+test('entrega o formulário com CSRF e chave gerada no servidor', function () {
     $response = $this->actingAs(userWithWallet())->get(route('deposits.create'));
 
     $response->assertOk();
@@ -26,7 +26,7 @@ it('serves a form with csrf and a server made key', function () {
         ->and($key[1])->toMatch('/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/');
 });
 
-it('gives a different key to each visit of the form', function () {
+test('dá uma chave diferente a cada visita ao formulário', function () {
     $this->actingAs(userWithWallet());
 
     $primeira = $this->get(route('deposits.create'))->getContent();
@@ -38,7 +38,7 @@ it('gives a different key to each visit of the form', function () {
     expect($a[1])->not->toBe($b[1]);
 });
 
-it('refuses an invalid amount with a message and no transaction', function (string $amount) {
+test('recusa valor inválido com mensagem e sem criar transação', function (string $amount) {
     $response = $this->actingAs(userWithWallet())
         ->from(route('deposits.create'))
         ->post(route('deposits.store'), ['amount' => $amount, 'idempotency_key' => (string) Str::uuid7()]);
@@ -48,7 +48,7 @@ it('refuses an invalid amount with a message and no transaction', function (stri
     expect(Transaction::count())->toBe(0);
 })->with(['', '0', '-10', '1000.50', '10,505', '1.000.000,01', 'abc']);
 
-it('refuses a key that is not a uuid', function () {
+test('recusa chave que não é UUID', function () {
     $this->actingAs(userWithWallet())
         ->from(route('deposits.create'))
         ->post(route('deposits.store'), ['amount' => '10,00', 'idempotency_key' => 'chave-qualquer'])
@@ -57,7 +57,7 @@ it('refuses a key that is not a uuid', function () {
     expect(Transaction::count())->toBe(0);
 });
 
-it('keeps the same key when the amount is rejected', function () {
+test('mantém a mesma chave quando o valor é recusado', function () {
     $key = (string) Str::uuid7();
 
     $this->actingAs(userWithWallet())
@@ -71,7 +71,7 @@ it('keeps the same key when the amount is rejected', function () {
         ->and($this->get(route('deposits.create'))->getContent())->toContain('value="'.$key.'"');
 });
 
-it('answers a successful deposit with a redirect and a message', function () {
+test('responde ao depósito bem-sucedido com redirect e mensagem', function () {
     $response = $this->actingAs(userWithWallet())
         ->post(route('deposits.store'), ['amount' => '1.000,50', 'idempotency_key' => (string) Str::uuid7()]);
 
@@ -81,7 +81,7 @@ it('answers a successful deposit with a redirect and a message', function () {
     $this->get(route('dashboard'))->assertOk()->assertSee('Depósito de R$ 1.000,50 realizado.');
 });
 
-it('does not deposit again when the page after the redirect is reloaded', function () {
+test('não deposita de novo quando a página do redirect é recarregada', function () {
     $user = userWithWallet();
 
     $this->actingAs($user)
@@ -95,7 +95,7 @@ it('does not deposit again when the page after the redirect is reloaded', functi
         ->and(walletOf($user)->balance)->toBe(1_000);
 });
 
-it('reaches the deposit form from the dashboard', function () {
+test('chega ao formulário de depósito pelo painel', function () {
     $this->actingAs(userWithWallet())
         ->get(route('dashboard'))
         ->assertOk()

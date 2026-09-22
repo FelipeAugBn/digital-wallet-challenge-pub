@@ -9,13 +9,13 @@ beforeEach(function () {
     ]);
 });
 
-it('shows the login form to a visitor', function () {
+test('mostra o formulário de login para o visitante', function () {
     $this->get(route('login'))
         ->assertOk()
         ->assertSee('name="_token"', false);
 });
 
-it('signs in with valid credentials and regenerates the session', function () {
+test('entra com credenciais válidas e renova a sessão', function () {
     $this->get(route('login'));
     $sessionBefore = session()->getId();
 
@@ -28,7 +28,7 @@ it('signs in with valid credentials and regenerates the session', function () {
     expect(session()->getId())->not->toBe($sessionBefore);
 });
 
-it('refuses wrong credentials with a message that does not reveal the account', function () {
+test('recusa credenciais erradas sem revelar se a conta existe', function () {
     $this->post(route('login'), [
         'email' => 'ana@example.test',
         'password' => 'senha-errada-qualquer',
@@ -37,7 +37,7 @@ it('refuses wrong credentials with a message that does not reveal the account', 
     $this->assertGuest();
 });
 
-it('signs out and invalidates the session', function () {
+test('sai da conta e invalida a sessão', function () {
     $this->actingAs($this->user);
     $sessionBefore = session()->getId();
 

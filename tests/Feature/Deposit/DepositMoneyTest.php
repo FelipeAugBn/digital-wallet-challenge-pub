@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Event;
 
 require_once __DIR__.'/helpers.php';
 
-it('creates one transaction and one credit entry', function () {
+test('cria uma transação e um lançamento de crédito', function () {
     $user = userWithWallet();
 
     $transaction = deposit($user, '1.000,50');
@@ -30,7 +30,7 @@ it('creates one transaction and one credit entry', function () {
         ->and($entry->amount)->toBe(100_050);
 });
 
-it('leaves the source empty and points the destination at the own wallet', function () {
+test('deixa a origem vazia e aponta o destino para a própria carteira', function () {
     $user = userWithWallet();
 
     $transaction = deposit($user, '10,00');
@@ -39,7 +39,7 @@ it('leaves the source empty and points the destination at the own wallet', funct
         ->and($transaction->destination_wallet_id)->toBe(walletOf($user)->id);
 });
 
-it('writes the new balance both on the wallet and on the entry', function () {
+test('grava o novo saldo na carteira e no lançamento', function () {
     $user = userWithWallet(2_500);
 
     deposit($user, '10,00');
@@ -48,7 +48,7 @@ it('writes the new balance both on the wallet and on the entry', function () {
         ->and(WalletEntry::sole()->balance_after)->toBe(3_500);
 });
 
-it('adds the deposit on top of a negative balance', function () {
+test('soma o depósito sobre saldo negativo', function () {
     $user = userWithWallet(-5_000);
 
     deposit($user, '30,00');
@@ -57,7 +57,7 @@ it('adds the deposit on top of a negative balance', function () {
         ->and(WalletEntry::sole()->balance_after)->toBe(-2_000);
 });
 
-it('keeps each deposit balance_after in step with the wallet', function () {
+test('mantém o balance_after de cada depósito alinhado com a carteira', function () {
     $user = userWithWallet();
 
     deposit($user, '10,00');
@@ -67,7 +67,7 @@ it('keeps each deposit balance_after in step with the wallet', function () {
         ->and(WalletEntry::orderBy('id')->pluck('balance_after')->all())->toBe([1_000, 1_550]);
 });
 
-it('locks the wallet only after trying to insert the transaction', function () {
+test('bloqueia a carteira só depois de tentar inserir a transação', function () {
     $user = userWithWallet();
     $queries = [];
 
@@ -96,7 +96,7 @@ it('locks the wallet only after trying to insert the transaction', function () {
         ->and($queries[$lock])->toContain('from "wallets"');
 });
 
-it('undoes everything when a failure happens after the transaction row exists', function () {
+test('desfaz tudo quando a falha acontece depois de a transação existir', function () {
     $user = userWithWallet(2_500);
 
     // O listener vive no dispatcher desta aplicacao de teste, que e recriada a

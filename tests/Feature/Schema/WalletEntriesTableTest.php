@@ -22,7 +22,7 @@ function insertEntry(array $attributes): int
     ], $attributes));
 }
 
-it('has the expected columns', function () {
+test('tem as colunas esperadas', function () {
     expect(Schema::hasTable('wallet_entries'))->toBeTrue()
         ->and(Schema::hasColumns('wallet_entries', [
             'id',
@@ -36,7 +36,7 @@ it('has the expected columns', function () {
         ]))->toBeTrue();
 });
 
-it('keeps every money column as a signed bigint', function () {
+test('mantém toda coluna de dinheiro como bigint com sinal', function () {
     $types = DB::table('information_schema.columns')
         ->where('table_name', 'wallet_entries')
         ->pluck('data_type', 'column_name');
@@ -48,7 +48,7 @@ it('keeps every money column as a signed bigint', function () {
         ->and($types)->not->toContain('double precision');
 });
 
-it('accepts a negative balance after a reversal', function () {
+test('aceita saldo negativo depois de um estorno', function () {
     $wallet = createWallet();
     $transaction = insertTransaction(['initiated_by_user_id' => $wallet->user_id]);
 
@@ -62,7 +62,7 @@ it('accepts a negative balance after a reversal', function () {
     expect(DB::table('wallet_entries')->where('id', $id)->value('balance_after'))->toBe(-1_500);
 });
 
-it('refuses an amount of zero or less', function () {
+test('recusa valor zero ou negativo', function () {
     $wallet = createWallet();
     $transaction = insertTransaction(['initiated_by_user_id' => $wallet->user_id]);
 
@@ -77,7 +77,7 @@ it('refuses an amount of zero or less', function () {
     expect(DB::table('wallet_entries')->count())->toBe(0);
 });
 
-it('refuses a type outside credit and debit', function () {
+test('recusa tipo fora de crédito e débito', function () {
     $wallet = createWallet();
     $transaction = insertTransaction(['initiated_by_user_id' => $wallet->user_id]);
 
@@ -90,7 +90,7 @@ it('refuses a type outside credit and debit', function () {
     expect(DB::table('wallet_entries')->count())->toBe(0);
 });
 
-it('refuses the same entry twice for one transaction, wallet and type', function () {
+test('recusa o mesmo lançamento duas vezes para a mesma transação, carteira e tipo', function () {
     $wallet = createWallet();
     $transaction = insertTransaction(['initiated_by_user_id' => $wallet->user_id]);
 
@@ -108,7 +108,7 @@ it('refuses the same entry twice for one transaction, wallet and type', function
     expect(DB::table('wallet_entries')->count())->toBe(2);
 });
 
-it('indexes the statement in the order it is read', function () {
+test('indexa o extrato na ordem em que ele é lido', function () {
     $definition = DB::table('pg_indexes')
         ->where('indexname', 'wallet_entries_statement_index')
         ->value('indexdef');
@@ -116,7 +116,7 @@ it('indexes the statement in the order it is read', function () {
     expect($definition)->toContain('(wallet_id, created_at DESC, id DESC)');
 });
 
-it('refuses to delete a wallet or a transaction that still has entries', function () {
+test('recusa apagar carteira ou transação que ainda tem lançamentos', function () {
     $wallet = createWallet();
     $transaction = insertTransaction(['initiated_by_user_id' => $wallet->user_id]);
 
