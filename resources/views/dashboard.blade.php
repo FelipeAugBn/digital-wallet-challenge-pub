@@ -8,7 +8,7 @@
 
     @include('layouts.mensagem')
 
-    <p class="alt"><a href="{{ route('deposits.create') }}">Depositar</a></p>
+    <p class="alt"><a href="{{ route('deposits.create') }}">Depositar</a> · <a href="{{ route('transfers.create') }}">Transferir</a></p>
 
     <form class="sair" method="POST" action="{{ route('logout') }}">
         @csrf

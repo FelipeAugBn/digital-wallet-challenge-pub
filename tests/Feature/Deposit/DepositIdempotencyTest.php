@@ -115,7 +115,7 @@ it('shows the conflict on screen without leaking any database detail', function 
         ->post(route('deposits.store'), ['amount' => '20,00', 'idempotency_key' => $key]);
 
     $response->assertRedirect(route('deposits.create'))
-        ->assertSessionHasErrors(['amount' => 'Esta operação já foi registrada com outros dados. Confira o valor e envie novamente.']);
+        ->assertSessionHasErrors(['amount' => 'Esta operação já foi registrada com outros dados. Confira os dados e envie novamente.']);
 
     // A chave gasta nao volta: o formulario precisa nascer com uma nova.
     expect(session()->getOldInput('idempotency_key'))->toBeNull()

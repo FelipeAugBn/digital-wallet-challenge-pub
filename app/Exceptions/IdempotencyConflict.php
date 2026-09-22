@@ -17,7 +17,7 @@ class IdempotencyConflict extends Exception
     /** Guarda a mensagem unica para os dois pontos que a usam. */
     public function __construct()
     {
-        parent::__construct('Esta operação já foi registrada com outros dados. Confira o valor e envie novamente.');
+        parent::__construct('Esta operação já foi registrada com outros dados. Confira os dados e envie novamente.');
     }
 
     /**
