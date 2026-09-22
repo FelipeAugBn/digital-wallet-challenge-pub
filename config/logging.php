@@ -1,5 +1,7 @@
 <?php
 
+use App\Logging\RedactSensitiveValues;
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -94,6 +96,14 @@ return [
             'processors' => [PsrLogMessageProcessor::class],
         ],
 
+        /*
+         * Canal padrao da aplicacao em container.
+         *
+         * JSON no stderr e o que o Docker recolhe sem arquivo intermediario:
+         * cada linha ja sai com horario, nivel, mensagem e contexto separados,
+         * e o contexto carrega o request ID posto pelo middleware. O processor
+         * de redacao fecha a porta para senha, cookie e token.
+         */
         'stderr' => [
             'driver' => 'monolog',
             'level' => env('LOG_LEVEL', 'debug'),
@@ -101,8 +111,8 @@ return [
             'handler_with' => [
                 'stream' => 'php://stderr',
             ],
-            'formatter' => env('LOG_STDERR_FORMATTER'),
-            'processors' => [PsrLogMessageProcessor::class],
+            'formatter' => env('LOG_STDERR_FORMATTER', JsonFormatter::class),
+            'processors' => [PsrLogMessageProcessor::class, RedactSensitiveValues::class],
         ],
 
         'syslog' => [

@@ -18,7 +18,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [RegisteredUserController::class, 'store']);
 
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+
+    // Cinco tentativas por minuto para cada par de IP e e-mail; a chave esta
+    // no `AppServiceProvider`.
+    Route::post('/login', [AuthenticatedSessionController::class, 'store'])
+        ->middleware('throttle:login');
 });
 
 Route::middleware('auth')->group(function () {
@@ -26,12 +30,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/extrato', StatementController::class)->name('statement');
 
     Route::get('/deposits', [DepositController::class, 'create'])->name('deposits.create');
-    Route::post('/deposits', [DepositController::class, 'store'])->name('deposits.store');
-
     Route::get('/transfers', [TransferController::class, 'create'])->name('transfers.create');
-    Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
 
-    Route::post('/transactions/{transaction}/reversals', ReversalController::class)->name('reversals.store');
+    // A cota de vinte por minuto e so do que movimenta dinheiro. Abrir o
+    // painel, paginar o extrato, pedir um formulario ou sair da conta nao
+    // gasta nada dela: quem esta conferindo o saldo nao disputa espaco com
+    // quem esta depositando.
+    Route::middleware('throttle:financial')->group(function () {
+        Route::post('/deposits', [DepositController::class, 'store'])->name('deposits.store');
+        Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
+        Route::post('/transactions/{transaction}/reversals', ReversalController::class)->name('reversals.store');
+    });
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
