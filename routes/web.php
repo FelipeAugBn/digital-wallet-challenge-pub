@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepositController;
+use App\Http\Controllers\ReversalController;
 use App\Http\Controllers\StatementController;
 use App\Http\Controllers\TransferController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/transfers', [TransferController::class, 'create'])->name('transfers.create');
     Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
+
+    Route::post('/transactions/{transaction}/reversals', ReversalController::class)->name('reversals.store');
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });

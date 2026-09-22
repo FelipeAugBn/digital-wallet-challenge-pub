@@ -10,10 +10,10 @@ use App\Exceptions\RecipientNotFound;
 use App\Exceptions\TransferToSelf;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Models\Wallet;
 use App\Models\WalletEntry;
 use App\Support\IdempotentTransaction;
 use App\Support\Money;
+use App\Support\WalletLocks;
 
 class TransferMoney
 {
@@ -67,7 +67,7 @@ class TransferMoney
                     'idempotency_key' => $idempotencyKey,
                 ]);
 
-                $wallets = $this->lockInIdOrder($sourceWalletId, $destinationWalletId);
+                $wallets = WalletLocks::inIdOrder($sourceWalletId, $destinationWalletId);
 
                 $source = $wallets[$sourceWalletId];
                 $destination = $wallets[$destinationWalletId];
@@ -110,28 +110,5 @@ class TransferMoney
                 return $transaction;
             },
         );
-    }
-
-    /**
-     * Bloqueia as duas carteiras do menor ID para o maior.
-     *
-     * Sao duas consultas separadas de proposito: assim a ordem dos locks e a
-     * ordem em que o PostgreSQL recebe os comandos, e nao uma escolha do
-     * planejador dentro de um `where in` com `order by`.
-     *
-     * @return array<int, Wallet> indexado pelo ID da carteira
-     */
-    private function lockInIdOrder(int $sourceWalletId, int $destinationWalletId): array
-    {
-        $ids = [$sourceWalletId, $destinationWalletId];
-        sort($ids);
-
-        $wallets = [];
-
-        foreach ($ids as $id) {
-            $wallets[$id] = Wallet::query()->whereKey($id)->lockForUpdate()->firstOrFail();
-        }
-
-        return $wallets;
     }
 }

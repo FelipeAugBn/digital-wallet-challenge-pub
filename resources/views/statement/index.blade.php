@@ -7,6 +7,9 @@
     <h1>Extrato</h1>
     <p class="sub">Todas as movimentações da sua carteira, da mais recente para a mais antiga.</p>
 
+    @include('layouts.mensagem')
+    @include('layouts.erros')
+
     @include('statement.lista', ['itens' => $pagina, 'vazio' => 'Nenhuma movimentação ainda.'])
 
     @if ($pagina->hasPages())

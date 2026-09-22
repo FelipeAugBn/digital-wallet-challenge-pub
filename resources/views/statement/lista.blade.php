@@ -13,6 +13,12 @@
                     </span>
                 </span>
                 <span class="valor @if ($item->isCredit) entrada @endif">{{ $item->amount }}</span>
+                @if ($item->reversibleId)
+                    <form class="estorno" method="POST" action="{{ route('reversals.store', $item->reversibleId) }}">
+                        @csrf
+                        <button type="submit">Estornar</button>
+                    </form>
+                @endif
             </li>
         @endforeach
     </ul>

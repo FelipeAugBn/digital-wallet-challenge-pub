@@ -143,6 +143,16 @@
             font-weight: 600;
         }
         .extrato .situacao.estornada { background: #fdf0ee; color: #8c2f20; }
+        .extrato .estorno { margin: 0; }
+        .extrato .estorno button {
+            width: auto;
+            padding: 4px 12px;
+            background: transparent;
+            border: 1px solid #c8cdd2;
+            color: #5c6367;
+            font-size: .8rem;
+            font-weight: 600;
+        }
         .vazio { margin: 0; padding: 14px 0; color: #5c6367; font-size: .9rem; }
 
         .paginas {

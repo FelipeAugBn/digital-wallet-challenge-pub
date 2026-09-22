@@ -38,10 +38,17 @@ final readonly class StatementEntry
         public bool $isCredit,
         public string $date,
         public string $status,
+        public ?string $reversibleId,
     ) {}
 
-    /** Traduz o lancamento do ponto de vista da carteira que esta na tela. */
-    public static function from(WalletEntry $entry, int $walletId): self
+    /**
+     * Traduz o lancamento do ponto de vista da carteira que esta na tela.
+     *
+     * `$canReverse` chega pronto de quem sabe responder: a tela nao pergunta
+     * quem e a pessoa nem consulta Policy. Quando o estorno nao cabe, o
+     * identificador nem aparece na pagina.
+     */
+    public static function from(WalletEntry $entry, int $walletId, bool $canReverse = false): self
     {
         $transaction = $entry->transaction;
         $isCredit = $entry->type === WalletEntryType::Credit;
@@ -56,6 +63,7 @@ final readonly class StatementEntry
             isCredit: $isCredit,
             date: $entry->created_at->format('d/m/Y H:i'),
             status: $transaction->status === TransactionStatus::Reversed ? 'Estornada' : 'Concluída',
+            reversibleId: $canReverse ? $transaction->id : null,
         );
     }
 
