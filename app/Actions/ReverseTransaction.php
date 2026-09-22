@@ -14,6 +14,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletEntry;
+use App\Support\FinancialLog;
 use App\Support\Money;
 use App\Support\ReversalEligibility;
 use App\Support\WalletLocks;
@@ -21,6 +22,37 @@ use Illuminate\Support\Facades\DB;
 
 class ReverseTransaction
 {
+    /**
+     * Desfaz a operacao e registra o que aconteceu.
+     *
+     * Aqui so a fronteira observavel: a regra esta em `reverse`, e o que este
+     * metodo acrescenta e o log do resultado. As quatro recusas previstas sao
+     * registradas e seguem subindo iguais, tanto para a tela quanto para o
+     * comando operacional.
+     *
+     * @throws TransactionNotFound quando o identificador nao existe
+     * @throws NotReversible quando a operacao e um estorno
+     * @throws AlreadyReversed quando a operacao ja foi desfeita
+     * @throws ReversalNotAllowed quando quem pede nao iniciou a operacao
+     */
+    public function handle(string $transactionId, ReversalReason $reason, ?User $initiator = null): Transaction
+    {
+        try {
+            $reversal = $this->reverse($transactionId, $reason, $initiator);
+        } catch (TransactionNotFound|NotReversible|AlreadyReversed|ReversalNotAllowed $recusa) {
+            FinancialLog::refused(TransactionType::Reversal, $recusa, [
+                'initiated_by_user_id' => $initiator?->id,
+                'original_transaction_id' => $transactionId,
+            ]);
+
+            throw $recusa;
+        }
+
+        FinancialLog::completed($reversal);
+
+        return $reversal;
+    }
+
     /**
      * Desfaz um deposito ou uma transferencia criando a operacao inversa.
      *
@@ -43,7 +75,7 @@ class ReverseTransaction
      * @throws AlreadyReversed quando a operacao ja foi desfeita
      * @throws ReversalNotAllowed quando quem pede nao iniciou a operacao
      */
-    public function handle(string $transactionId, ReversalReason $reason, ?User $initiator = null): Transaction
+    private function reverse(string $transactionId, ReversalReason $reason, ?User $initiator): Transaction
     {
         return DB::transaction(function () use ($transactionId, $reason, $initiator): Transaction {
             // Primeira consulta da transacao: a linha original bloqueada. Quem

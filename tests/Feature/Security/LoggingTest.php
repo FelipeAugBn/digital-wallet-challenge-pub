@@ -5,31 +5,15 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Monolog\Formatter\JsonFormatter;
 
-beforeEach(function () {
-    // O canal de prova e o proprio canal da aplicacao com o destino trocado:
-    // o formato, os processors e o nivel continuam sendo os de producao, e so
-    // o `php://stderr` vira um arquivo que o teste consegue ler de volta.
-    $this->arquivo = tempnam(sys_get_temp_dir(), 'wallet-log-');
+require_once __DIR__.'/helpers.php';
 
-    config([
-        'logging.channels.prova' => array_replace(config('logging.channels.stderr'), [
-            'handler_with' => ['stream' => $this->arquivo],
-        ]),
-        'logging.default' => 'prova',
-    ]);
+beforeEach(function () {
+    $this->arquivo = capturaLogs();
 });
 
 afterEach(function () {
     @unlink($this->arquivo);
 });
-
-/** As linhas ja decodificadas que a aplicacao escreveu. */
-function linhasDeLog(string $arquivo): array
-{
-    $linhas = array_filter(explode("\n", (string) file_get_contents($arquivo)));
-
-    return array_map(fn (string $linha) => json_decode($linha, true, flags: JSON_THROW_ON_ERROR), $linhas);
-}
 
 test('escreve cada linha de log em JSON com horário, nível, mensagem e contexto', function () {
     Route::middleware('web')->get('/registro-de-prova', function () {

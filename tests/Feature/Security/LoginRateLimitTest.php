@@ -9,6 +9,14 @@ beforeEach(function () {
         'email' => 'ana@example.test',
         'password' => 'senha-bem-segura',
     ]);
+
+    // Nenhuma cota atravessa de um teste para o outro. As chaves limpas aqui
+    // sao exatamente as que o middleware monta a partir do `AppServiceProvider`.
+    foreach (['ana@example.test', 'bia@example.test'] as $email) {
+        foreach (['127.0.0.1', '203.0.113.10'] as $ip) {
+            limpaLimite('login', chaveDoLogin($email, $ip));
+        }
+    }
 });
 
 test('aceita cinco tentativas de login por minuto e recusa a sexta', function () {

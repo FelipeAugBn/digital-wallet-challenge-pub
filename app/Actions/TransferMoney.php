@@ -5,12 +5,14 @@ namespace App\Actions;
 use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
 use App\Enums\WalletEntryType;
+use App\Exceptions\IdempotencyConflict;
 use App\Exceptions\InsufficientFunds;
 use App\Exceptions\RecipientNotFound;
 use App\Exceptions\TransferToSelf;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletEntry;
+use App\Support\FinancialLog;
 use App\Support\IdempotentTransaction;
 use App\Support\Money;
 use App\Support\WalletLocks;
@@ -19,6 +21,37 @@ class TransferMoney
 {
     /** O mesmo componente do deposito, sem copia de regra de idempotencia. */
     public function __construct(private readonly IdempotentTransaction $idempotentTransaction) {}
+
+    /**
+     * Move o dinheiro e registra o que aconteceu.
+     *
+     * Aqui so a fronteira observavel: a regra esta em `move`, e o que este
+     * metodo acrescenta e o log do resultado. As quatro recusas previstas sao
+     * registradas e seguem subindo iguais, para que a tela continue mostrando a
+     * mesma mensagem de sempre. O e-mail do destinatario nao entra no log nem
+     * quando ele e o motivo da recusa.
+     *
+     * @throws RecipientNotFound quando o e-mail nao pertence a ninguem
+     * @throws TransferToSelf quando o e-mail e o de quem esta enviando
+     * @throws InsufficientFunds quando o saldo bloqueado nao cobre o valor
+     * @throws IdempotencyConflict quando a chave voltou com outros dados
+     */
+    public function handle(User $sender, string $recipientEmail, Money $amount, string $idempotencyKey): Transaction
+    {
+        try {
+            $transaction = $this->move($sender, $recipientEmail, $amount, $idempotencyKey);
+        } catch (RecipientNotFound|TransferToSelf|InsufficientFunds|IdempotencyConflict $recusa) {
+            FinancialLog::refused(TransactionType::Transfer, $recusa, [
+                'initiated_by_user_id' => $sender->id,
+            ]);
+
+            throw $recusa;
+        }
+
+        FinancialLog::completed($transaction);
+
+        return $transaction;
+    }
 
     /**
      * Move dinheiro de uma carteira para outra, uma vez so por chave.
@@ -34,7 +67,7 @@ class TransferMoney
      * @throws TransferToSelf quando o e-mail e o de quem esta enviando
      * @throws InsufficientFunds quando o saldo bloqueado nao cobre o valor
      */
-    public function handle(User $sender, string $recipientEmail, Money $amount, string $idempotencyKey): Transaction
+    private function move(User $sender, string $recipientEmail, Money $amount, string $idempotencyKey): Transaction
     {
         $recipient = User::query()->where('email', $recipientEmail)->first()
             ?? throw new RecipientNotFound;

@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 require_once __DIR__.'/helpers.php';
 
 beforeEach(function () {
-    $this->user = userWithWallet();
+    $this->user = usuarioComCotaLimpa();
     $this->actingAs($this->user);
 });
 
@@ -24,7 +24,7 @@ test('aceita vinte POSTs financeiros por minuto e recusa o vigésimo primeiro', 
 });
 
 test('divide a mesma cota entre depósito, transferência e estorno', function () {
-    $bia = userWithWallet();
+    $bia = usuarioComCotaLimpa();
     $original = deposit($this->user, '50,00');
 
     foreach (range(1, 18) as $envio) {
@@ -52,7 +52,7 @@ test('dá cota própria a outra pessoa', function () {
 
     postDeposito()->assertSessionHasErrors(['limite']);
 
-    $this->actingAs(userWithWallet());
+    $this->actingAs(usuarioComCotaLimpa());
 
     postDeposito()
         ->assertRedirect(route('dashboard'))
@@ -82,4 +82,19 @@ test('não gasta a cota financeira com leituras nem com o logout', function () {
     postDeposito()->assertSessionHasErrors(['limite']);
 
     expect($deposito->refresh()->status)->toBe(TransactionStatus::Completed);
+});
+
+test('mantém o visitante fora das rotas financeiras, antes mesmo da cota', function () {
+    $original = deposit($this->user, '10,00');
+
+    $this->post(route('logout'));
+
+    // A autenticacao corre antes do limite, entao o visitante nem chega a
+    // gastar cota — nem a propria, que nao existe, nem a de outra pessoa.
+    postDeposito()->assertRedirect(route('login'));
+    postTransferencia($this->user->email)->assertRedirect(route('login'));
+    $this->post(route('reversals.store', $original))->assertRedirect(route('login'));
+
+    expect(Transaction::count())->toBe(1)
+        ->and($original->refresh()->status)->toBe(TransactionStatus::Completed);
 });
