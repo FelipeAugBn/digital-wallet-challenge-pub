@@ -55,6 +55,15 @@
             font-size: .9rem;
         }
         .erros li + li { margin-top: 4px; }
+        .ok {
+            margin: 0 0 16px;
+            padding: 12px;
+            background: #eef6f3;
+            border: 1px solid #bcdcd2;
+            border-radius: 5px;
+            color: #0f6b5c;
+            font-size: .9rem;
+        }
         .alt { margin: 18px 0 0; text-align: center; font-size: .9rem; }
         a { color: #0f6b5c; }
         .sair { margin-top: 20px; }
