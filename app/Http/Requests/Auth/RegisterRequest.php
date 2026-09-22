@@ -8,6 +8,8 @@ use Illuminate\Validation\Rules\Password;
 class RegisterRequest extends FormRequest
 {
     /**
+     * A senha segue `Password::defaults()` e exige confirmacao.
+     *
      * @return array<string, mixed>
      */
     public function rules(): array
@@ -20,6 +22,8 @@ class RegisterRequest extends FormRequest
     }
 
     /**
+     * Mensagens em portugues no lugar das padroes do framework.
+     *
      * @return array<string, string>
      */
     public function messages(): array

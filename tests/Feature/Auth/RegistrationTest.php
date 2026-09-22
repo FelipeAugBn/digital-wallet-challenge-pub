@@ -5,6 +5,12 @@ use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Os campos que o formulario de cadastro envia quando tudo esta certo.
+ *
+ * @param  array<string, string>  $overrides
+ * @return array<string, string>
+ */
 function validRegistration(array $overrides = []): array
 {
     return array_merge([
@@ -77,6 +83,7 @@ it('rejects an email that is already registered', function () {
 it('discards the user when the wallet cannot be created', function () {
     $this->app->bind(CreateWallet::class, fn () => new class extends CreateWallet
     {
+        /** Falha sempre, para provar que a transacao desfaz o usuario. */
         public function handle(User $user): Wallet
         {
             throw new RuntimeException('Falha proposital ao criar a carteira.');

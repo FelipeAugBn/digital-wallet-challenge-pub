@@ -12,11 +12,13 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
+    /** Mostra o formulario de login. */
     public function create(): View
     {
         return view('auth.login');
     }
 
+    /** Confere as credenciais e renova o identificador da sessao. */
     public function store(LoginRequest $request): RedirectResponse
     {
         if (! Auth::attempt($request->validated())) {
@@ -30,6 +32,7 @@ class AuthenticatedSessionController extends Controller
         return redirect()->intended(route('dashboard'));
     }
 
+    /** Encerra a sessao e gera um novo token de formulario. */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::logout();

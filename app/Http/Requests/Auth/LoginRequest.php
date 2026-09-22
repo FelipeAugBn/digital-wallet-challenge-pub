@@ -7,6 +7,8 @@ use Illuminate\Foundation\Http\FormRequest;
 class LoginRequest extends FormRequest
 {
     /**
+     * So a forma dos campos; quem julga a credencial e o `Auth::attempt`.
+     *
      * @return array<string, mixed>
      */
     public function rules(): array
@@ -18,6 +20,8 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Mensagens em portugues no lugar das padroes do framework.
+     *
      * @return array<string, string>
      */
     public function messages(): array

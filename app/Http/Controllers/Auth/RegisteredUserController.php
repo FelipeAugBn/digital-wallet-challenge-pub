@@ -11,11 +11,13 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    /** Mostra o formulario de cadastro. */
     public function create(): View
     {
         return view('auth.register');
     }
 
+    /** Cadastra a pessoa, ja abre a sessao dela e leva ao painel. */
     public function store(RegisterRequest $request, RegisterUser $registerUser): RedirectResponse
     {
         $user = $registerUser->handle($request->validated());

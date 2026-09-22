@@ -2,26 +2,10 @@
 
 use App\Models\User;
 use App\Models\Wallet;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Executa a violacao dentro de um savepoint para que a conexao continue
- * utilizavel depois do erro do PostgreSQL.
- */
-function expectConstraintViolation(string $sqlState, Closure $operation): void
-{
-    try {
-        DB::transaction($operation);
-    } catch (QueryException $exception) {
-        expect($exception->getCode())->toBe($sqlState);
-
-        return;
-    }
-
-    test()->fail('O PostgreSQL aceitou uma operacao que deveria ser recusada.');
-}
+require_once __DIR__.'/helpers.php';
 
 it('has the expected columns', function () {
     expect(Schema::hasTable('wallets'))->toBeTrue()

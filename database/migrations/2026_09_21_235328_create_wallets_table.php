@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /** Cria a carteira com as travas que o PostgreSQL passa a garantir sozinho. */
     public function up(): void
     {
         Schema::create('wallets', function (Blueprint $table) {
@@ -17,6 +18,7 @@ return new class extends Migration
         });
     }
 
+    /** Derruba a tabela; a unicidade e a chave estrangeira caem junto. */
     public function down(): void
     {
         Schema::dropIfExists('wallets');
