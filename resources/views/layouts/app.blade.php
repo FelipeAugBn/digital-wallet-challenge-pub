@@ -629,8 +629,8 @@
         .anel-legenda li:last-child { border-bottom: 0; }
         .anel-legenda span { color: var(--tinta-media); }
         .anel-legenda b { font: 500 .8125rem var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .anel-legenda .entrou b { color: var(--verde); }
-        .anel-legenda .saiu b { color: var(--saida); }
+        .anel-legenda .depositado b, .anel-legenda .recebido b { color: var(--verde); }
+        .anel-legenda .enviado b { color: var(--saida); }
         .anel-legenda .estornado b { color: var(--estorno); }
         .anel-legenda .liquido { margin-top: 4px; border-top: 1px dashed var(--regua-forte); }
         .anel-legenda .liquido span { color: var(--tinta); font-weight: 600; }

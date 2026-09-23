@@ -152,10 +152,16 @@ final class DashboardCharts
      *
      * @return array{valor: string, classe: string}
      */
+    /** O valor com o sinal na frente: `+R$ 10,00`, `-R$ 10,00` ou `R$ 0,00`. */
+    private static function comSinal(int $centavos): string
+    {
+        return ($centavos > 0 ? '+' : '').Money::fromCents($centavos)->format();
+    }
+
     private static function leitura(int $centavos): array
     {
         return [
-            'valor' => ($centavos > 0 ? '+' : '').Money::fromCents($centavos)->format(),
+            'valor' => self::comSinal($centavos),
             'classe' => $centavos > 0 ? 'positivo' : ($centavos < 0 ? 'negativo' : 'neutro'),
         ];
     }
@@ -357,9 +363,11 @@ final class DashboardCharts
      * saiu. No centro vai a porcentagem do lado maior, que cabe em qualquer
      * carteira; os valores, que crescem, ficam na legenda.
      *
-     * "Estornado" conta os lancamentos de reversao do mes, que e quando o
-     * dinheiro voltou. Contar pelo estado da operacao original poria o valor
-     * no mes dela, e nao no mes em que o estorno aconteceu.
+     * A legenda lista as acoes do mes, cada uma com o sinal que teve na
+     * carteira, e so as que aconteceram: depositado, recebido, enviado e
+     * estornado somam o liquido. "Estornado" conta os lancamentos de reversao
+     * do mes, que e quando o dinheiro voltou ou saiu; contar pelo estado da
+     * operacao original poria o valor no mes dela, e nao no mes do estorno.
      *
      * @param  Collection<int, WalletEntry>  $lancamentos
      * @return array<string, mixed>
@@ -370,8 +378,24 @@ final class DashboardCharts
 
         $entrou = (int) $doMes->filter(fn (WalletEntry $l) => $l->type === WalletEntryType::Credit)->sum('amount');
         $saiu = (int) $doMes->filter(fn (WalletEntry $l) => $l->type === WalletEntryType::Debit)->sum('amount');
-        $estornado = (int) $doMes->filter(fn (WalletEntry $l) => $l->transaction->type === TransactionType::Reversal)->sum('amount');
         $liquido = $entrou - $saiu;
+
+        // Cada acao com o sinal que teve nesta carteira: o estorno de um envio
+        // devolve, o de um deposito ou de um recebimento tira.
+        $porAcao = fn (TransactionType $tipo, ?WalletEntryType $lado = null) => (int) $doMes
+            ->filter(fn (WalletEntry $l) => $l->transaction->type === $tipo && ($lado === null || $l->type === $lado))
+            ->sum(fn (WalletEntry $l) => $l->type === WalletEntryType::Credit ? $l->amount : -$l->amount);
+        $acoes = [
+            ['rotulo' => 'Depositado', 'valor' => $porAcao(TransactionType::Deposit), 'classe' => 'depositado'],
+            ['rotulo' => 'Recebido', 'valor' => $porAcao(TransactionType::Transfer, WalletEntryType::Credit), 'classe' => 'recebido'],
+            ['rotulo' => 'Enviado', 'valor' => $porAcao(TransactionType::Transfer, WalletEntryType::Debit), 'classe' => 'enviado'],
+            ['rotulo' => 'Estornado', 'valor' => $porAcao(TransactionType::Reversal), 'classe' => 'estornado'],
+        ];
+        $legenda = array_values(array_map(
+            fn (array $acao) => [...$acao, 'valor' => self::comSinal($acao['valor'])],
+            array_filter($acoes, fn (array $acao) => $acao['valor'] !== 0),
+        ));
+        $legenda[] = ['rotulo' => 'Líquido', 'valor' => self::comSinal($liquido), 'classe' => 'liquido'];
         $total = $entrou + $saiu;
 
         $fracao = $total === 0 ? 0.0 : $entrou / $total;
@@ -386,12 +410,7 @@ final class DashboardCharts
             'arcoSaiu' => round(max($circunferencia * (1 - $fracao) - 2 * $folga, 0), 2),
             'deslocamentoSaiu' => round(-($circunferencia * $fracao + $folga), 2),
             'liquidoMes' => self::leitura($liquido),
-            'legendaAnel' => [
-                ['rotulo' => 'Entrou', 'valor' => '+'.Money::fromCents($entrou)->format(), 'classe' => 'entrou'],
-                ['rotulo' => 'Saiu', 'valor' => Money::fromCents(-$saiu)->format(), 'classe' => 'saiu'],
-                ['rotulo' => 'Estornado', 'valor' => Money::fromCents($estornado)->format(), 'classe' => 'estornado'],
-                ['rotulo' => 'Líquido', 'valor' => ($liquido > 0 ? '+' : '').Money::fromCents($liquido)->format(), 'classe' => 'liquido'],
-            ],
+            'legendaAnel' => $legenda,
             'descricaoAnel' => sprintf(
                 'Entrou %s e saiu %s: %d%% do movimento do mês %s. Líquido %s.',
                 Money::fromCents($entrou)->format(),

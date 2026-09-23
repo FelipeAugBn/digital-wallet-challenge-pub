@@ -226,13 +226,15 @@ test('os gráficos do painel da Ana contam as cinco semanas do cenário', functi
     $html = $this->actingAs(pessoaDemo('ana@wallet.test'))->get(route('dashboard'))->assertOk()->getContent();
 
     // Seis dias com movimento, um rótulo para cada; em setembro saiu um pouco
-    // mais do que entrou, e a transferência estornada conta nos dois lados.
+    // mais do que entrou. A legenda lista cada ação com o sinal que teve na
+    // carteira: o envio estornado sai em "Enviado" e volta em "Estornado".
     expect(rotulosDasBarras($html))->toBe(['22 ago', '30 ago', '7 set', '14 set', '18 set', '22 set'])
         ->and(centroDoAnel($html))->toBe(['51%', 'saiu'])
         ->and(legendaDoAnel($html))->toBe([
-            'Entrou' => '+R$ 409,75',
-            'Saiu' => '-R$ 434,25',
-            'Estornado' => 'R$ 150,00',
+            'Depositado' => '+R$ 50,00',
+            'Recebido' => '+R$ 209,75',
+            'Enviado' => '-R$ 434,25',
+            'Estornado' => '+R$ 150,00',
             'Líquido' => '-R$ 24,50',
         ])
         ->and(descricaoDoGrafico($html, 'curva-desc'))->toBe('O saldo era R$ 0,00 em 19 de agosto e termina em R$ 800,00 hoje.');

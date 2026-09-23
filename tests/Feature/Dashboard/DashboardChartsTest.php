@@ -34,7 +34,7 @@ test('não desenha gráficos sem movimentação', function () {
         ->assertDontSee('Sem movimentação nas últimas cinco semanas.');
 });
 
-test('o anel resume o mês corrente, com a porcentagem no centro e os valores na legenda', function () {
+test('o anel resume o mês corrente, com a porcentagem no centro e as ações na legenda', function () {
     $ana = userWithWallet();
     $bia = userWithWallet();
 
@@ -45,12 +45,12 @@ test('o anel resume o mês corrente, com a porcentagem no centro e os valores na
 
     $html = painelDe($ana)->assertSee('Setembro')->getContent();
 
-    // 25 de 35 entrou: 71%. O centro nunca cresce; o que cresce vai para a legenda.
+    // 25 de 35 entrou: 71%. O centro nunca cresce; o que cresce vai para a
+    // legenda, que lista só as ações que houve e fecha no líquido.
     expect(centroDoAnel($html))->toBe(['71%', 'entrou'])
         ->and(legendaDoAnel($html))->toBe([
-            'Entrou' => '+R$ 25,00',
-            'Saiu' => '-R$ 10,00',
-            'Estornado' => 'R$ 0,00',
+            'Depositado' => '+R$ 25,00',
+            'Enviado' => '-R$ 10,00',
             'Líquido' => '+R$ 15,00',
         ]);
 });
@@ -71,9 +71,9 @@ test('o estorno entra no anel e marca o dia na curva e nas barras', function () 
     // O estorno devolve os R$ 10,00: entrou 35, saiu 10, e a saída ficou marcada como estornada.
     expect(centroDoAnel($html))->toBe(['78%', 'entrou'])
         ->and(legendaDoAnel($html))->toBe([
-            'Entrou' => '+R$ 35,00',
-            'Saiu' => '-R$ 10,00',
-            'Estornado' => 'R$ 10,00',
+            'Depositado' => '+R$ 25,00',
+            'Enviado' => '-R$ 10,00',
+            'Estornado' => '+R$ 10,00',
             'Líquido' => '+R$ 25,00',
         ])
         ->and($html)->toContain('class="marca-estorno"')
@@ -108,7 +108,14 @@ test('num dia com entrada, saída e estorno, a barra mostra só a parte que foi 
         ->and(substr_count($html, 'class="b-entrada"'))->toBe(2)
         ->and(substr_count($html, 'class="b-saida"'))->toBe(2)
         ->and(substr_count($html, 'class="b-estorno"'))->toBe(2)
-        ->and($html)->toMatch('/height="25\.6" clip-path="url\(#ce1\)" class="b-estorno"/');
+        ->and($html)->toMatch('/height="25\.6" clip-path="url\(#ce1\)" class="b-estorno"/')
+        // Cada ação com o sinal que teve na carteira, e as quatro somam o líquido.
+        ->and(legendaDoAnel($html))->toBe([
+            'Depositado' => '+R$ 80,00',
+            'Enviado' => '-R$ 15,00',
+            'Estornado' => '+R$ 10,00',
+            'Líquido' => '+R$ 75,00',
+        ]);
 });
 
 test('o estorno conta no mês em que o dinheiro voltou, não no mês da operação desfeita', function () {
@@ -128,9 +135,7 @@ test('o estorno conta no mês em que o dinheiro voltou, não no mês da operaç�
     // Contar pelo estado da operação original deixaria setembro com R$ 0,00
     // estornado, embora tenha sido o mês em que os R$ 40,00 voltaram.
     expect(legendaDoAnel($html))->toBe([
-        'Entrou' => '+R$ 40,00',
-        'Saiu' => 'R$ 0,00',
-        'Estornado' => 'R$ 40,00',
+        'Estornado' => '+R$ 40,00',
         'Líquido' => '+R$ 40,00',
     ])
         // Os dois dias ficam marcados: o da operação desfeita e o do estorno.
@@ -158,8 +163,8 @@ test('cada painel desenha apenas os lançamentos da própria carteira', function
         ->and(rotulosDasBarras($daBia))->toBe(['11 set'])
         ->and(descricaoDoGrafico($daAna, 'curva-desc'))->toBe('O saldo era R$ 0,00 em 19 de agosto e termina em R$ 12,34 hoje.')
         ->and(descricaoDoGrafico($daBia, 'curva-desc'))->toBe('O saldo era R$ 0,00 em 19 de agosto e termina em R$ 99,99 hoje.')
-        ->and(legendaDoAnel($daAna)['Entrou'])->toBe('+R$ 12,34')
-        ->and(legendaDoAnel($daBia)['Entrou'])->toBe('+R$ 99,99');
+        ->and(legendaDoAnel($daAna)['Depositado'])->toBe('+R$ 12,34')
+        ->and(legendaDoAnel($daBia)['Depositado'])->toBe('+R$ 99,99');
 });
 
 test('só as últimas cinco semanas entram nas barras, e a curva parte do saldo anterior', function () {
