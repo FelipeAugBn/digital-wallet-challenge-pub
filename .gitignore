@@ -16,6 +16,7 @@
 /.env
 /.env.*
 !/.env.example
+!/.env.e2e.example
 /auth.json
 *.key
 *.pem
@@ -29,6 +30,11 @@
 
 # Arquivos gerados durante execucao e testes
 *.log
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/e2e/.sessoes/
 /.phpunit.cache/
 /.phpunit.result.cache
 /coverage/

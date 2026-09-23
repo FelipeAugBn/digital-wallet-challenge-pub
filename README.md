@@ -301,6 +301,31 @@ A suíte roda contra PostgreSQL, no banco `wallet_testing`, criado junto com os 
 afirma isso em tempo de execução. Travas de linha, rollback integral e recusa de chave repetida pelo
 índice são comportamento do banco: em outro banco o teste passaria sem provar nada.
 
+### Testes de ponta a ponta, num navegador
+
+Opcionais: exigem Node e não fazem parte do fluxo de execução da aplicação. A suíte Pest cobre o
+servidor inteiro; estes cobrem o que só existe depois do HTML, num Chromium de verdade — o token
+CSRF que volta no formulário enviado por uma pessoa, os campos de data do filtro, o botão de tema
+com a escolha guardada no navegador e as telas na largura de um celular.
+
+```bash
+npm install
+npx playwright install chromium   # só na primeira vez
+npm run e2e                       # sobe a aplicação, prepara o banco e roda
+npm run e2e:relatorio             # abre o relatório da última execução
+```
+
+O E2E não usa a aplicação que você deixou rodando. Ele sobe um container próprio na porta 8081,
+com `APP_ENV=e2e`, e o Laravel então lê `.env.e2e` — criado na primeira execução a partir de
+`.env.e2e.example`. O banco é o `wallet_e2e`, apagado e semeado a cada execução, e o preparo se
+recusa a rodar se apontarem `DB_DATABASE` para `wallet` ou `wallet_testing`. Antes do primeiro
+teste, uma verificação abre uma página e confere que a sessão apareceu no banco do E2E: se o
+servidor estiver falando com outro banco, a execução para ali.
+
+> O banco vem por `.env.e2e`, e não por uma variável na linha de comando, porque `artisan serve`
+> repassa ao servidor apenas uma lista fixa de variáveis de ambiente. `DB_DATABASE` não está nela e
+> seria descartada em silêncio; `APP_ENV` está.
+
 ## Decisões e evoluções
 
 **Dinheiro em centavos inteiros.** Nenhum `float` toca valor monetário. A classe `Money` é a única
