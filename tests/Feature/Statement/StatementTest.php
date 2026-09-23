@@ -167,3 +167,13 @@ test('não dispara uma consulta por lançamento', function () {
     // consultas cresceria com a lista, e aqui ele não pode depender dela.
     expect(count($consultas))->toBeLessThan(12);
 });
+
+test('abre com o saldo disponível no cabeçalho, fora da coluna de lançamentos', function () {
+    $ana = userWithWallet();
+    deposit($ana, '800,00');
+
+    $html = $this->actingAs($ana)->get(route('statement'))->getContent();
+
+    expect($html)->toContain('<span>Saldo disponível</span><b>R$ 800,00</b>')
+        ->and(valoresNaTela($html))->toBe(['+R$ 800,00']);
+});

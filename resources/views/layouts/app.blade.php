@@ -248,7 +248,7 @@
 
         /* ---- Formularios ---------------------------------------------------- */
 
-        main > form { max-width: 22rem; }
+        .ficha { max-width: 22rem; }
         label { display: block; margin-bottom: 5px; font-size: .875rem; font-weight: 600; }
         input {
             width: 100%;
@@ -299,7 +299,7 @@
         }
         button:hover { background: var(--verde-escuro); border-color: var(--verde-escuro); }
         button:disabled { background: var(--regua); border-color: var(--regua-forte); color: var(--tinta-fraca); cursor: not-allowed; }
-        main > form button { width: 100%; }
+        .ficha button[type="submit"] { width: 100%; }
 
         /* ---- Mensagens: a forma do sinal muda junto com a cor --------------- */
 
@@ -502,9 +502,10 @@
         .alt { margin: 28px 0 0; color: var(--tinta-media); font-size: .9375rem; }
         .alt a { padding: 6px 2px; }
 
-        /* ---- Capa da pagina de entrada -------------------------------------- */
+        /* ---- Pagina inicial: a vitrine e o proprio instrumento ---------------- */
 
-        .capa { padding: 40px 0 44px; background: var(--papel); border-bottom: 1px solid var(--regua); }
+        .capa { padding: 40px 0 8px; }
+        .capa-grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: center; }
         .capa h1 {
             max-width: 17ch;
             margin: 0 0 14px;
@@ -515,7 +516,82 @@
         }
         .capa .sub { max-width: 46ch; margin: 0 0 28px; font-size: 1rem; }
         .capa .acoes { margin: 0; }
-        .amostra { margin: 0 0 6px; color: var(--tinta-fraca); font-size: .8125rem; }
+        /* A amostra usa as mesmas pecas do painel, com valores de exemplo. */
+        .vitrine .instrumento { padding: 22px 24px 6px; }
+        .vitrine .rotulo .exemplo {
+            margin-left: 8px;
+            padding: 1px 6px;
+            border: 1px solid var(--regua-forte);
+            border-radius: 3px;
+            color: var(--tinta-fraca);
+            font: .6875rem var(--mono);
+        }
+        .vitrine .saldo { font-size: clamp(2rem, 3.5vw, 2.75rem); }
+        .vitrine .fita-lista { margin-top: 14px; padding-top: 4px; border-top: 1px dashed var(--regua-forte); }
+        .vitrine .fita-lista li { grid-template-columns: 5.5rem minmax(0, 1fr) auto; padding: 9px 0 9px 12px; }
+        .vitrine .fita-lista .pos { display: none; }
+        /* As tres operacoes, lado a lado: nao e uma sequencia, dai sem numeros. */
+        .operacoes {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 24px;
+            margin: 0;
+            padding-top: 24px;
+            border-top: 1px solid var(--regua);
+        }
+        .operacoes dt { font-size: .9375rem; font-weight: 600; }
+        .operacoes dd { max-width: 34ch; margin: 4px 0 0; color: var(--tinta-media); font-size: .9375rem; }
+
+        /* ---- Telas de acao e extrato: cabeca com a leitura do saldo ------------ */
+
+        .cabeca {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 10px 24px;
+            margin-bottom: 22px;
+        }
+        .cabeca .sub { margin: 0; }
+        .leitura-saldo { display: flex; flex-direction: column; gap: 1px; margin: 0; text-align: right; }
+        .leitura-saldo span { color: var(--tinta-fraca); font-size: .8125rem; }
+        .leitura-saldo b {
+            font: 500 1.25rem var(--mono);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -.02em;
+            white-space: nowrap;
+        }
+
+        /* Depositar e transferir: a ficha num cartao, o saldo ao lado, como no painel. */
+        .painel-form { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 18px; align-items: start; }
+        .painel-form .cartao { padding: 24px 26px 22px; }
+        .painel-form .ficha { max-width: 26rem; }
+        .instrumento.lado { padding: 22px 24px 20px; }
+        .lado .saldo { font-size: clamp(1.75rem, 3vw, 2.25rem); }
+        .notas {
+            margin: 16px 0 0;
+            padding: 12px 0 0;
+            border-top: 1px dashed var(--regua-forte);
+            list-style: none;
+            color: var(--tinta-media);
+            font-size: .875rem;
+        }
+        .notas li { position: relative; padding-left: 14px; }
+        .notas li + li { margin-top: 6px; }
+        .notas li::before { content: ""; position: absolute; top: .7em; left: 0; width: 6px; height: 1px; background: var(--regua-forte); }
+
+        /* O extrato e uma folha: a lista e as paginas dentro do mesmo cartao. */
+        .folha { padding: 6px 22px 10px; }
+        .folha .extrato li.dia:first-child { padding-top: 14px; }
+        .folha .extrato li:last-child { border-bottom: 0; }
+        .folha .paginas { margin: 0; padding: 14px 0 6px; border-top: 1px solid var(--regua); }
+
+        /* Entrar e criar conta: um cartao so, no centro. */
+        .acesso { max-width: 26rem; margin: 16px auto 0; padding: 28px 28px 26px; }
+        .acesso h1 { margin-bottom: 4px; }
+        .acesso .sub { margin-bottom: 20px; }
+        .acesso .ficha { max-width: none; }
+        .acesso .alt { margin-top: 22px; }
 
         /* ---- Graficos do painel --------------------------------------------- */
 
@@ -561,8 +637,16 @@
         .anel-legenda .liquido b { font-weight: 600; }
 
         @media (max-width: 48rem) {
-            .grade { grid-template-columns: 1fr; }
+            .grade, .painel-form, .capa-grade, .operacoes { grid-template-columns: 1fr; }
+            .capa { padding-top: 28px; }
+            .capa-grade { gap: 24px; }
+            .operacoes { gap: 16px; }
             .instrumento { padding: 22px 20px 20px; }
+            .vitrine .instrumento { padding-bottom: 6px; }
+            .vitrine .fita-lista li { grid-template-columns: minmax(0, 1fr) auto; }
+            .painel-form .cartao, .acesso { padding: 22px 20px 20px; }
+            .leitura-saldo { text-align: left; }
+            .folha { padding: 4px 16px 8px; }
             .dial-caixa { grid-template-columns: 140px minmax(0, 1fr); }
             .curva .eixo { font-size: 19px; }
             .curva .rotulo-fim { font-size: 22px; }

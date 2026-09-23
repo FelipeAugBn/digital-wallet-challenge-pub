@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletEntry;
+use App\Support\Money;
 use App\Support\ReversalEligibility;
 use App\Support\StatementEntry;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -39,6 +40,9 @@ class StatementController extends Controller
 
         return view('statement.index', [
             'pagina' => $this->traduzida($pagina, $wallet->id, $user),
+            // O saldo ja veio com a carteira; e a leitura que abre o extrato,
+            // como no cabecalho de um extrato de banco.
+            'saldo' => Money::fromCents($wallet->balance)->format(),
         ]);
     }
 

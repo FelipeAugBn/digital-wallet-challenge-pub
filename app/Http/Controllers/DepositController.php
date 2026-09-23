@@ -6,15 +6,24 @@ use App\Actions\DepositMoney;
 use App\Http\Requests\DepositRequest;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class DepositController extends Controller
 {
-    /** Abre o formulario com uma chave nova, gerada aqui e nunca pelo navegador. */
-    public function create(): View
+    /**
+     * Abre o formulario com uma chave nova, gerada aqui e nunca pelo navegador.
+     *
+     * O saldo vai junto so para a pessoa ver de onde parte; a regra que decide
+     * se a operacao cabe continua na Action, com a carteira travada.
+     */
+    public function create(Request $request): View
     {
-        return view('deposits.create', ['idempotencyKey' => (string) Str::uuid7()]);
+        return view('deposits.create', [
+            'idempotencyKey' => (string) Str::uuid7(),
+            'saldo' => Money::fromCents($request->user()->wallet()->firstOrFail()->balance)->format(),
+        ]);
     }
 
     /**

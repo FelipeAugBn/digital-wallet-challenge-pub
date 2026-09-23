@@ -111,14 +111,15 @@ Para recriar o cenário do zero: `./vendor/bin/sail artisan migrate:fresh --seed
 (`1.000,50`), entre R$ 0,01 e R$ 1.000.000,00. A transferência identifica o destinatário pelo
 e-mail; para si mesmo ou acima do saldo é recusada sem alterar nenhuma carteira. Ambos os
 formulários trazem uma chave de idempotência do servidor, então reenviar a página não duplica a
-operação.
+operação. O saldo disponível aparece ao lado, só como leitura: a recusa por saldo continua sendo
+decidida com a carteira travada.
 
 **Painel** (`/dashboard`). Saldo, atalhos e as últimas movimentações, com três gráficos: a
 evolução do saldo nas últimas cinco semanas, as entradas e saídas de cada dia com movimento e
 um resumo do mês corrente. O tema é claro por padrão, com opção de escuro guardada no navegador.
 
 **Extrato** (`/extrato`). Quinze lançamentos por página, do mais recente para o mais antigo, com
-rótulo, contraparte, valor com sinal e situação.
+rótulo, contraparte, valor com sinal e situação, e o saldo disponível no cabeçalho.
 
 **Estorno pela interface.** O botão aparece no extrato, somente nas operações concluídas que a
 própria pessoa iniciou.

@@ -101,3 +101,10 @@ test('chega ao formulário de depósito pelo painel', function () {
         ->assertOk()
         ->assertSee(route('deposits.create'), false);
 });
+
+test('mostra o saldo disponível ao lado do formulário, sem contá-lo como lançamento', function () {
+    $html = $this->actingAs(userWithWallet(80_000))->get(route('deposits.create'))->getContent();
+
+    expect($html)->toContain('<p class="saldo">R$ 800,00</p>')
+        ->and($html)->not->toContain('<span class="valor');
+});

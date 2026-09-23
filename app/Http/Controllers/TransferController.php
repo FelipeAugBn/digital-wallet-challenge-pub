@@ -9,16 +9,26 @@ use App\Exceptions\TransferToSelf;
 use App\Http\Requests\TransferRequest;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class TransferController extends Controller
 {
-    /** Abre o formulario com uma chave decidida aqui, nunca pelo navegador. */
-    public function create(): View
+    /**
+     * Abre o formulario com uma chave decidida aqui, nunca pelo navegador.
+     *
+     * O saldo vai junto so para a pessoa ver quanto tem antes de digitar; a
+     * recusa por saldo insuficiente continua sendo decidida na Action, com a
+     * carteira travada, e nunca a partir deste numero.
+     */
+    public function create(Request $request): View
     {
-        return view('transfers.create', ['idempotencyKey' => $this->formKey()]);
+        return view('transfers.create', [
+            'idempotencyKey' => $this->formKey(),
+            'saldo' => Money::fromCents($request->user()->wallet()->firstOrFail()->balance)->format(),
+        ]);
     }
 
     /**
