@@ -1,3 +1,3 @@
 @if (session('sucesso'))
-    <p class="ok">{{ session('sucesso') }}</p>
+    <p class="ok" role="status">{{ session('sucesso') }}</p>
 @endif

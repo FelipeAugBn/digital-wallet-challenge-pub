@@ -12,10 +12,10 @@
         @csrf
 
         <label for="email">E-mail</label>
-        <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus>
+        <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus @error('email') aria-invalid="true" @enderror>
 
         <label for="password">Senha</label>
-        <input id="password" name="password" type="password" required>
+        <input id="password" name="password" type="password" required @error('password') aria-invalid="true" @enderror>
 
         <button type="submit">Entrar</button>
     </form>

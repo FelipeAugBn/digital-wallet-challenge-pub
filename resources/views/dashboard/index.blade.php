@@ -1,15 +1,20 @@
 @extends('layouts.app')
 
+@use('Illuminate\Support\Str')
+
 @section('title', 'Minha carteira')
-@section('largura', 'largo')
 
 @section('conteudo')
-    <h1>Olá, {{ $nome }}</h1>
-
     @include('layouts.mensagem')
 
+    <h1>Olá, {{ $nome }}</h1>
+
     <p class="rotulo">Saldo disponível</p>
-    <p class="saldo @if (str_starts_with($saldo, '-')) negativo @endif">{{ $saldo }}</p>
+    <p @class(['saldo', 'negativo' => str_starts_with($saldo, '-')])>{{ $saldo }}</p>
+
+    @if ($recentes->isNotEmpty())
+        <p class="desde">Última movimentação {{ Str::lcfirst($recentes->first()->dayLabel) }} às {{ $recentes->first()->time }}</p>
+    @endif
 
     <div class="acoes">
         <a class="primaria" href="{{ route('deposits.create') }}">Depositar</a>

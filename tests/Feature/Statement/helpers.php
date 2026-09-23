@@ -100,6 +100,14 @@ function valoresNaTela(string $html): array
     return array_map('trim', $achados[1]);
 }
 
+/** Os cabeçalhos de dia que aparecem na tela, na ordem em que aparecem. */
+function diasNaTela(string $html): array
+{
+    preg_match_all('/<li class="dia">([^<]+)<\/li>/', $html, $achados);
+
+    return array_map('trim', $achados[1]);
+}
+
 /** Força o mesmo instante em todos os lançamentos, para testar o desempate. */
 function mesmoInstante(): void
 {

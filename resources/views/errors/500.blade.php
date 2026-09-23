@@ -6,42 +6,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Algo deu errado · Wallet</title>
     {{-- Esta pagina nao usa o layout comum de proposito: ela precisa aparecer
-         mesmo quando a falha esta justamente no que o layout consulta. --}}
+         mesmo quando a falha esta justamente no que o layout consulta. Por isso
+         as cores sao repetidas aqui, e nao herdadas. --}}
     <style>
         :root { color-scheme: light; }
         * { box-sizing: border-box; }
         body {
             margin: 0;
             padding: 24px 16px;
-            background: #f4f5f7;
-            color: #1b1e20;
-            font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: #f1f4f2;
+            color: #10211d;
+            font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         }
-        .card {
-            max-width: 26rem;
-            margin: 0 auto;
-            padding: 24px;
+        .folha {
+            width: min(26rem, 100% - 2rem);
+            margin: 24px auto;
+            padding: 28px;
             background: #fff;
-            border: 1px solid #e2e5e8;
-            border-radius: 8px;
+            border: 1px solid #e1e8e4;
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(16, 33, 29, .04);
         }
-        h1 { margin: 0 0 4px; font-size: 1.35rem; }
-        .sub { margin: 0 0 20px; color: #5c6367; font-size: .9rem; }
+        h1 { margin: 0 0 4px; font-size: 1.3rem; font-weight: 600; letter-spacing: -.01em; }
+        .sub { margin: 0 0 20px; color: #47605a; font-size: .9375rem; }
+        p { margin: 0 0 14px; }
         .codigo {
-            padding: 10px 12px;
-            background: #f4f5f7;
-            border: 1px solid #e2e5e8;
-            border-radius: 5px;
+            margin: 0;
+            padding: 11px 12px;
+            background: #f1f4f2;
+            border: 1px solid #e1e8e4;
+            border-radius: 6px;
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: .82rem;
+            font-size: .8125rem;
             word-break: break-all;
         }
-        .alt { margin: 18px 0 0; text-align: center; font-size: .9rem; }
-        a { color: #0f6b5c; }
+        .alt {
+            margin: 24px 0 0;
+            padding-top: 18px;
+            border-top: 1px solid #e1e8e4;
+            color: #47605a;
+            font-size: .9375rem;
+            text-align: center;
+        }
+        a { color: #0f6b5c; text-underline-offset: 2px; }
+        :focus-visible { outline: 2px solid #0f6b5c; outline-offset: 2px; border-radius: 3px; }
     </style>
 </head>
 <body>
-    <main class="card">
+    <main class="folha">
         <h1>Algo deu errado</h1>
         <p class="sub">A operação não foi concluída.</p>
         <p>Operações financeiras acontecem por inteiro ou não acontecem: nada ficou pela metade. Tente novamente em alguns instantes.</p>

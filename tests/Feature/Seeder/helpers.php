@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Collection;
 // o cenário semeado precisa existir de verdade no banco e passar pelo mesmo
 // comando de conferência que a aceitação da tarefa exige.
 require_once __DIR__.'/../Reconciliation/helpers.php';
+// E `valoresNaTela` e `diasNaTela`, para ler o extrato semeado como a pessoa o vê.
+require_once __DIR__.'/../Statement/helpers.php';
 
 /** A pessoa de demonstração com este e-mail, como a aplicação a encontraria. */
 function pessoaDemo(string $email): User
@@ -43,17 +45,22 @@ function estornadasPor(string $motivo): Collection
 /**
  * O cenário reduzido ao que a demonstração mostra.
  *
- * Fica de fora tudo que muda a cada execução por natureza — identificadores,
- * chaves de idempotência e horários. O que sobra é exatamente o que precisa
- * sair igual toda vez: quem são as pessoas, quanto cada operação moveu, em que
- * estado ela ficou e onde o dinheiro parou.
+ * Ficam de fora identificadores e chaves de idempotência, que mudam a cada
+ * execução por natureza. Os horários entram: o seeder posiciona o relógio em
+ * cada operação, e com o relógio fixado pelo teste eles precisam sair iguais
+ * toda vez, tanto quanto as pessoas, os valores, os estados e os saldos.
  *
  * @return array<string, mixed>
  */
 function retratoDaDemonstracao(): array
 {
     return [
-        'pessoas' => User::query()->orderBy('email')->pluck('name', 'email')->toArray(),
+        'pessoas' => User::query()->orderBy('email')->get()
+            ->mapWithKeys(fn (User $user) => [$user->email => [
+                'nome' => $user->name,
+                'desde' => $user->created_at->format('Y-m-d H:i:s'),
+                'carteiraDesde' => $user->wallet->created_at->format('Y-m-d H:i:s'),
+            ]])->toArray(),
         'saldos' => User::query()->orderBy('email')->get()
             ->mapWithKeys(fn (User $user) => [$user->email => saldoDemo($user->email)])
             ->toArray(),
@@ -63,12 +70,26 @@ function retratoDaDemonstracao(): array
                 'estado' => $transaction->status->value,
                 'valor' => $transaction->amount,
                 'motivo' => $transaction->reversal_reason?->value,
+                'quando' => $transaction->created_at->format('Y-m-d H:i:s'),
             ])->toArray(),
         'lancamentos' => WalletEntry::query()->orderBy('created_at')->orderBy('id')->get()
             ->map(fn (WalletEntry $entry) => [
                 'tipo' => $entry->type->value,
                 'valor' => $entry->amount,
                 'saldo' => $entry->balance_after,
+                'quando' => $entry->created_at->format('Y-m-d H:i:s'),
             ])->toArray(),
     ];
+}
+
+/** As páginas do extrato da pessoa, já reduzidas aos valores mostrados. */
+function paginasDoExtrato(User $pessoa): array
+{
+    $paginas = [];
+
+    for ($n = 1; $n <= 2; $n++) {
+        $paginas[$n] = valoresNaTela(test()->actingAs($pessoa)->get(route('statement', ['page' => $n]))->getContent());
+    }
+
+    return $paginas;
 }

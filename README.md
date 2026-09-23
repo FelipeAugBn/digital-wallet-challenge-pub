@@ -102,25 +102,11 @@ ambiente.
 | Bruno Carvalho | `bruno@wallet.test` | `demonstracao` | R$ 600,00 |
 | Carla Nogueira | `carla@wallet.test` | `demonstracao` | R$ 350,00 |
 
-O cenário é fixo e cobre todos os estados que as telas exibem: três depósitos e duas transferências
-concluídas, uma transferência estornada a pedido de quem a iniciou e um depósito estornado por
-inconsistência. Tudo é criado pelas mesmas operações da interface — por isso a conferência de saldos
-passa no banco recém-semeado.
-
-<details>
-<summary>Sequência exata das movimentações</summary>
-
-```
-Ana deposita            R$ 1.000,00
-Bruno deposita          R$   500,00
-Carla deposita          R$   250,00
-Ana    →  Bruno         R$   200,00
-Bruno  →  Carla         R$   100,00
-Ana    →  Carla         R$   150,00   → estornada a pedido da Ana
-Carla deposita          R$    80,00   → estornada por inconsistência
-```
-
-</details>
+O cenário é fixo: 26 operações distribuídas pelas últimas cinco semanas, entre depósitos e
+transferências das três contas, mais uma transferência estornada a pedido de quem a iniciou e um
+depósito estornado por inconsistência. Ana termina com 19 lançamentos, o bastante para o extrato ter
+uma segunda página. Tudo é criado pelas mesmas operações da interface, com o relógio da aplicação
+posicionado em cada data — por isso a conferência de saldos passa no banco recém-semeado.
 
 Para recriar o cenário do zero: `./vendor/bin/sail artisan migrate:fresh --seed`.
 

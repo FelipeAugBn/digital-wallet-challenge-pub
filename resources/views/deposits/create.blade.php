@@ -16,7 +16,10 @@
         <input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', $idempotencyKey) }}">
 
         <label for="amount">Valor</label>
-        <input id="amount" name="amount" type="text" inputmode="decimal" placeholder="1.000,50" value="{{ old('amount') }}" required autofocus>
+        <div class="campo-moeda">
+            <span class="prefixo" aria-hidden="true">R$</span>
+            <input id="amount" name="amount" type="text" inputmode="decimal" placeholder="1.000,50" value="{{ old('amount') }}" required autofocus @error('amount') aria-invalid="true" @enderror>
+        </div>
 
         <button type="submit">Depositar</button>
     </form>

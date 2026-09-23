@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Support\Money;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -27,6 +28,10 @@ use Illuminate\Support\Str;
  * Nenhum valor e sorteado. Os nomes, os e-mails, a senha e as quantias sao
  * fixos para que a demonstracao seja sempre a mesma e os saldos finais possam
  * ser conferidos de cabeca.
+ *
+ * O cenario tem passado: as operacoes acontecem ao longo das ultimas cinco
+ * semanas, e nao todas no mesmo instante. Isso nao muda a regra de quem grava
+ * — quem grava continua sendo a Action. O que se move e o relogio, em `em()`.
  */
 class DatabaseSeeder extends Seeder
 {
@@ -34,6 +39,55 @@ class DatabaseSeeder extends Seeder
 
     /** A senha das tres contas: ficticia, igual para todas e facil de digitar. */
     public const SENHA = 'demonstracao';
+
+    /**
+     * O mes de movimentacao das tres contas, do mais antigo para o mais recente.
+     *
+     * Cada linha e "dias atras, hora, operacao, de, para, valor". As duas
+     * operacoes que terminam desfeitas ficam fora daqui, no fim de `run()`,
+     * porque cada uma precisa da transacao que ela anula.
+     *
+     * As quantias fecham exatamente nos saldos anunciados no README, e nenhuma
+     * carteira passa por saldo negativo no caminho.
+     *
+     * @var list<array{int, string, string, string, ?string, string}>
+     */
+    private const HISTORICO = [
+        // Um dia de abertura: cada uma poe o proprio dinheiro e o primeiro
+        // dinheiro comeca a circular.
+        [self::DIA_DE_ABERTURA, '09:12', 'deposito', 'ana', null, '1.000,00'],
+        [self::DIA_DE_ABERTURA, '10:40', 'deposito', 'bruno', null, '250,00'],
+        [self::DIA_DE_ABERTURA, '11:05', 'deposito', 'carla', null, '90,00'],
+        [self::DIA_DE_ABERTURA, '14:20', 'transferencia', 'ana', 'bruno', '200,00'],
+        [self::DIA_DE_ABERTURA, '15:48', 'transferencia', 'bruno', 'carla', '100,00'],
+        [self::DIA_DE_ABERTURA, '19:47', 'transferencia', 'ana', 'carla', '45,50'],
+        [self::DIA_DE_ABERTURA, '20:15', 'transferencia', 'carla', 'ana', '20,00'],
+
+        [24, '08:30', 'deposito', 'ana', null, '200,00'],
+        [24, '09:22', 'transferencia', 'ana', 'bruno', '90,00'],
+        [24, '12:41', 'transferencia', 'bruno', 'ana', '60,00'],
+        [24, '18:05', 'transferencia', 'ana', 'carla', '120,00'],
+        [24, '19:30', 'transferencia', 'carla', 'bruno', '90,00'],
+
+        [16, '08:05', 'deposito', 'bruno', null, '160,00'],
+        [16, '10:14', 'transferencia', 'ana', 'bruno', '35,00'],
+        [16, '13:44', 'transferencia', 'bruno', 'ana', '35,00'],
+        [16, '16:20', 'transferencia', 'ana', 'carla', '75,25'],
+        [16, '17:02', 'transferencia', 'carla', 'ana', '12,75'],
+
+        [9, '09:15', 'transferencia', 'bruno', 'ana', '140,00'],
+        [9, '11:50', 'transferencia', 'ana', 'carla', '64,00'],
+        [9, '15:25', 'transferencia', 'carla', 'ana', '22,00'],
+        [9, '18:30', 'deposito', 'ana', null, '50,00'],
+
+        [5, '14:05', 'transferencia', 'ana', 'bruno', '110,00'],
+    ];
+
+    /** Quantos dias antes de hoje o cenario abre: as pessoas nascem nesse dia. */
+    public const DIA_DE_ABERTURA = 32;
+
+    /** O dia em que a demonstracao foi semeada, de onde sai todo o passado. */
+    private Carbon $hoje;
 
     /**
      * Semeia o banco com o cenario inteiro.
@@ -48,30 +102,64 @@ class DatabaseSeeder extends Seeder
         TransferMoney $transferMoney,
         ReverseTransaction $reverseTransaction,
     ): void {
-        $ana = $this->pessoa($createWallet, 'Ana Ribeiro', 'ana@wallet.test');
-        $bruno = $this->pessoa($createWallet, 'Bruno Carvalho', 'bruno@wallet.test');
-        $carla = $this->pessoa($createWallet, 'Carla Nogueira', 'carla@wallet.test');
+        $this->hoje = Carbon::today();
+        $relogioAnterior = Carbon::getTestNow();
 
-        // Entrada de dinheiro: e o unico jeito de o saldo nascer.
-        $this->deposita($depositMoney, $ana, '1.000,00');
-        $this->deposita($depositMoney, $bruno, '500,00');
-        $this->deposita($depositMoney, $carla, '250,00');
+        try {
+            // As pessoas nascem antes do primeiro lancamento, na manha do dia de
+            // abertura: ninguem pode movimentar uma carteira que ainda nao existe.
+            $this->em(self::DIA_DE_ABERTURA, '08:00');
 
-        // Dinheiro circulando entre as tres carteiras.
-        $this->transfere($transferMoney, $ana, $bruno, '200,00');
-        $this->transfere($transferMoney, $bruno, $carla, '100,00');
+            $pessoas = [
+                'ana' => $this->pessoa($createWallet, 'Ana Ribeiro', 'ana@wallet.test'),
+                'bruno' => $this->pessoa($createWallet, 'Bruno Carvalho', 'bruno@wallet.test'),
+                'carla' => $this->pessoa($createWallet, 'Carla Nogueira', 'carla@wallet.test'),
+            ];
 
-        // Transferencia que Ana desfaz pela propria tela. O motivo exige autor,
-        // e o autor precisa ser quem iniciou a operacao.
-        $enganoDaAna = $this->transfere($transferMoney, $ana, $carla, '150,00');
-        $reverseTransaction->handle($enganoDaAna->id, ReversalReason::UserRequest, $ana);
+            foreach (self::HISTORICO as [$dias, $hora, $tipo, $de, $para, $valor]) {
+                $this->em($dias, $hora);
 
-        // Deposito lancado em duplicidade e desfeito pelo operador, sem autor:
-        // e o caso que o comando `wallet:reverse` atende.
-        $depositoEmDuplicidade = $this->deposita($depositMoney, $carla, '80,00');
-        $reverseTransaction->handle($depositoEmDuplicidade->id, ReversalReason::Inconsistency, null);
+                $tipo === 'deposito'
+                    ? $this->deposita($depositMoney, $pessoas[$de], $valor)
+                    : $this->transfere($transferMoney, $pessoas[$de], $pessoas[$para], $valor);
+            }
 
-        $this->apresentaCredenciais([$ana, $bruno, $carla]);
+            // Deposito lancado em duplicidade e desfeito pelo operador, sem autor:
+            // e o caso que o comando `wallet:reverse` atende.
+            $this->em(5, '16:40');
+            $depositoEmDuplicidade = $this->deposita($depositMoney, $pessoas['carla'], '80,00');
+
+            $this->em(5, '17:10');
+            $reverseTransaction->handle($depositoEmDuplicidade->id, ReversalReason::Inconsistency, null);
+
+            // Transferencia que Ana desfaz pela propria tela. O motivo exige autor,
+            // e o autor precisa ser quem iniciou a operacao.
+            $this->em(1, '09:20');
+            $enganoDaAna = $this->transfere($transferMoney, $pessoas['ana'], $pessoas['carla'], '150,00');
+
+            $this->em(1, '09:35');
+            $reverseTransaction->handle($enganoDaAna->id, ReversalReason::UserRequest, $pessoas['ana']);
+        } finally {
+            // O relogio volta ao que era mesmo se alguma operacao falhar: deixar
+            // a aplicacao com a hora congelada seria pior que nao semear. Volta
+            // ao que era, e nao ao real, porque um teste pode ter fixado a hora
+            // antes de semear e continua precisando dela depois.
+            Carbon::setTestNow($relogioAnterior);
+        }
+
+        $this->apresentaCredenciais(array_values($pessoas));
+    }
+
+    /**
+     * Move o relogio da aplicacao para o instante desta operacao.
+     *
+     * O seeder continua sem tocar nas tabelas financeiras: quem grava e a
+     * Action, e e ela que carimba `created_at` com a hora corrente. Mover o
+     * relogio e o unico jeito de dar passado ao cenario sem escrever por fora.
+     */
+    private function em(int $diasAtras, string $hora): void
+    {
+        Carbon::setTestNow($this->hoje->copy()->subDays($diasAtras)->setTimeFromTimeString($hora));
     }
 
     /**

@@ -12,16 +12,16 @@
         @csrf
 
         <label for="name">Nome</label>
-        <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus>
+        <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus @error('name') aria-invalid="true" @enderror>
 
         <label for="email">E-mail</label>
-        <input id="email" name="email" type="email" value="{{ old('email') }}" required>
+        <input id="email" name="email" type="email" value="{{ old('email') }}" required @error('email') aria-invalid="true" @enderror>
 
         <label for="password">Senha</label>
-        <input id="password" name="password" type="password" required>
+        <input id="password" name="password" type="password" required @error('password') aria-invalid="true" @enderror>
 
         <label for="password_confirmation">Confirme a senha</label>
-        <input id="password_confirmation" name="password_confirmation" type="password" required>
+        <input id="password_confirmation" name="password_confirmation" type="password" required @error('password_confirmation') aria-invalid="true" @enderror>
 
         <button type="submit">Criar conta</button>
     </form>

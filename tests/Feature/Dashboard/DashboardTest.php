@@ -3,9 +3,13 @@
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\WalletEntry;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 require_once __DIR__.'/../Statement/helpers.php';
+
+// Os testes que fixam o relógio o devolvem no fim, mesmo quando a asserção falha.
+afterEach(fn () => Carbon::setTestNow());
 
 test('leva o visitante para o login', function () {
     $this->get(route('dashboard'))->assertRedirect(route('login'));
@@ -103,4 +107,25 @@ test('abrir o painel não movimenta dinheiro nem trava carteira', function () {
         ->and(Transaction::count())->toBe(1)
         ->and(WalletEntry::count())->toBe(1)
         ->and(walletOf($ana)->balance)->toBe(6_000);
+});
+
+test('mostra quando foi a última movimentação, com o dia como se fala', function (string $quando, string $esperado) {
+    $ana = userWithWallet();
+
+    Carbon::setTestNow($quando);
+    deposit($ana, '10,00');
+
+    Carbon::setTestNow('2026-09-23 12:00:00');
+
+    $this->actingAs($ana)->get(route('dashboard'))->assertOk()->assertSee($esperado);
+})->with([
+    'hoje' => ['2026-09-23 14:05:00', 'Última movimentação hoje às 14:05'],
+    'ontem' => ['2026-09-22 09:35:00', 'Última movimentação ontem às 09:35'],
+    'mais antiga' => ['2026-09-03 08:15:00', 'Última movimentação 3 de setembro às 08:15'],
+]);
+
+test('não fala de última movimentação quando não há nenhuma', function () {
+    $this->actingAs(userWithWallet())->get(route('dashboard'))
+        ->assertOk()
+        ->assertDontSee('Última movimentação');
 });

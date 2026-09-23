@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', 'Extrato')
-@section('largura', 'largo')
 
 @section('conteudo')
     <h1>Extrato</h1>
@@ -15,13 +14,13 @@
     @if ($pagina->hasPages())
         <nav class="paginas" aria-label="Páginas do extrato">
             @if ($pagina->previousPageUrl())
-                <a href="{{ $pagina->previousPageUrl() }}" rel="prev">← Mais recentes</a>
+                <a href="{{ $pagina->previousPageUrl() }}" rel="prev"><span class="seta" aria-hidden="true">&larr;</span>Mais recentes</a>
             @endif
 
             <span class="conta">Página {{ $pagina->currentPage() }} de {{ $pagina->lastPage() }}</span>
 
             @if ($pagina->nextPageUrl())
-                <a href="{{ $pagina->nextPageUrl() }}" rel="next">Mais antigas →</a>
+                <a href="{{ $pagina->nextPageUrl() }}" rel="next">Mais antigas<span class="seta" aria-hidden="true">&rarr;</span></a>
             @endif
         </nav>
     @endif

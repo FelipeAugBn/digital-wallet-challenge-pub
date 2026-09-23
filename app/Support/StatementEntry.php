@@ -6,6 +6,7 @@ use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
 use App\Enums\WalletEntryType;
 use App\Models\WalletEntry;
+use Illuminate\Support\Carbon;
 
 /**
  * Um lancamento do livro-razao já traduzido para a tela.
@@ -32,11 +33,28 @@ final readonly class StatementEntry
         'transaction.originalTransaction.destinationWallet.user',
     ];
 
+    /**
+     * Os meses por extenso.
+     *
+     * Ficam explicitos, em vez de sair das traducoes do Carbon, porque o texto
+     * do cabecalho e parte do que a tela promete e os testes fixam: assim ele
+     * nao muda com uma versao da biblioteca nem com o idioma em tempo de
+     * execucao.
+     *
+     * @var array<int, string>
+     */
+    private const MESES = [
+        1 => 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+        'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+    ];
+
     private function __construct(
         public string $label,
         public string $amount,
         public bool $isCredit,
-        public string $date,
+        public string $dayKey,
+        public string $dayLabel,
+        public string $time,
         public string $status,
         public ?string $reversibleId,
     ) {}
@@ -61,10 +79,38 @@ final readonly class StatementEntry
             label: self::label($transaction, $walletId, $isCredit),
             amount: $isCredit ? '+'.$signed->format() : $signed->format(),
             isCredit: $isCredit,
-            date: $entry->created_at->format('d/m/Y H:i'),
+            // O dia e a hora saem separados porque a tela agrupa por dia: a
+            // data inteira em toda linha repetiria o mesmo texto varias vezes.
+            dayKey: $entry->created_at->format('Y-m-d'),
+            dayLabel: self::dayLabel($entry->created_at),
+            time: $entry->created_at->format('H:i'),
             status: $transaction->status === TransactionStatus::Reversed ? 'Estornada' : 'Concluída',
             reversibleId: $canReverse ? $transaction->id : null,
         );
+    }
+
+    /**
+     * O dia como alguem diria em voz alta.
+     *
+     * Os dois dias mais recentes ganham nome, que e como se fala deles; o resto
+     * vira data por extenso, e o ano so aparece quando nao e o corrente.
+     */
+    private static function dayLabel(Carbon $momento): string
+    {
+        $hoje = Carbon::now($momento->getTimezone())->startOfDay();
+        $dia = $momento->copy()->startOfDay();
+
+        if ($dia->equalTo($hoje)) {
+            return 'Hoje';
+        }
+
+        if ($dia->equalTo($hoje->copy()->subDay())) {
+            return 'Ontem';
+        }
+
+        $rotulo = $momento->day.' de '.self::MESES[$momento->month];
+
+        return $momento->year === $hoje->year ? $rotulo : $rotulo.' de '.$momento->year;
     }
 
     /** O rotulo de cada combinacao de operacao e lado do lancamento. */
