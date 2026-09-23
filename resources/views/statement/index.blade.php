@@ -15,8 +15,25 @@
     @include('layouts.mensagem')
     @include('layouts.erros')
 
+    {{-- O filtro é um formulário GET: a busca vira endereço, dá para guardar e
+         compartilhar, e as outras páginas carregam o mesmo período. --}}
+    <form class="filtro" method="GET" action="{{ route('statement') }}" aria-label="Filtrar por período">
+        <div>
+            <label for="inicio">Data inicial</label>
+            <input id="inicio" name="inicio" type="date" value="{{ old('inicio', $filtros['inicio'] ?? '') }}" @error('inicio') aria-invalid="true" @enderror>
+        </div>
+
+        <div>
+            <label for="fim">Data final</label>
+            <input id="fim" name="fim" type="date" value="{{ old('fim', $filtros['fim'] ?? '') }}" @error('fim') aria-invalid="true" @enderror>
+        </div>
+
+        <button type="submit">Filtrar</button>
+        <a class="limpar" href="{{ route('statement') }}">Limpar</a>
+    </form>
+
     <section class="cartao folha" aria-label="Lançamentos">
-        @include('statement.lista', ['itens' => $pagina, 'vazio' => 'Nenhuma movimentação ainda.'])
+        @include('statement.lista', ['itens' => $pagina, 'vazio' => $vazio])
 
         @if ($pagina->hasPages())
             <nav class="paginas" aria-label="Páginas do extrato">

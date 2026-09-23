@@ -119,7 +119,9 @@ evolução do saldo nas últimas cinco semanas, as entradas e saídas de cada di
 um resumo do mês corrente, com o que foi depositado, recebido, enviado e estornado. O tema é claro por padrão, com opção de escuro guardada no navegador.
 
 **Extrato** (`/extrato`). Quinze lançamentos por página, do mais recente para o mais antigo, com
-rótulo, contraparte, valor com sinal e situação, e o saldo disponível no cabeçalho.
+rótulo, contraparte, valor com sinal e situação, e o saldo disponível no cabeçalho. O filtro por
+período aceita data inicial, data final ou as duas (`?inicio=2026-09-01&fim=2026-09-30`); o dia
+final entra inteiro, e o período escolhido segue nos links das outras páginas.
 
 **Estorno pela interface.** O botão aparece no extrato, somente nas operações concluídas que a
 própria pessoa iniciou.

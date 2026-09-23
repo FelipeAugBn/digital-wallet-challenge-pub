@@ -7,13 +7,6 @@ require_once __DIR__.'/helpers.php';
 // O relógio é fixado por teste e devolvido no fim, mesmo quando a asserção falha.
 afterEach(fn () => Carbon::setTestNow());
 
-/** Um depósito feito no instante dado, como se a pessoa o tivesse feito naquela hora. */
-function depositoEm(string $quando, $pessoa, string $valor = '1,00'): void
-{
-    Carbon::setTestNow($quando);
-    deposit($pessoa, $valor);
-}
-
 test('chama de Hoje e Ontem os dois dias mais recentes', function () {
     $ana = userWithWallet();
     depositoEm('2026-09-22 10:00:00', $ana);

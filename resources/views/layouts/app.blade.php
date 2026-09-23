@@ -580,6 +580,45 @@
         .notas li + li { margin-top: 6px; }
         .notas li::before { content: ""; position: absolute; top: .7em; left: 0; width: 6px; height: 1px; background: var(--regua-forte); }
 
+        /* Filtro por periodo: uma faixa acima da folha, com a regua dos cartoes.
+           Os campos sao `type="date"`, entao o calendario e o do proprio
+           navegador e a pagina continua sem uma linha de script. */
+        .filtro {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 10px 14px;
+            margin-bottom: 14px;
+            padding: 14px 18px;
+            background: var(--papel);
+            border: 1px solid var(--regua);
+            border-radius: 6px;
+            box-shadow: var(--sombra);
+        }
+        .filtro label { margin-bottom: 4px; color: var(--tinta-media); font-size: .75rem; font-weight: 500; }
+        .filtro input {
+            width: auto;
+            margin-bottom: 0;
+            padding: 8px 10px;
+            font: .875rem var(--mono);
+            font-variant-numeric: tabular-nums;
+        }
+        .filtro button { min-height: 38px; padding: 8px 18px; font-size: .875rem; }
+        .filtro .limpar {
+            display: inline-flex;
+            min-height: 38px;
+            align-items: center;
+            padding: 8px 14px;
+            border: 1px solid var(--regua-forte);
+            border-radius: 4px;
+            color: var(--tinta-media);
+            font-size: .875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: border-color .12s ease, color .12s ease;
+        }
+        .filtro .limpar:hover { border-color: var(--verde); color: var(--tinta); }
+
         /* O extrato e uma folha: a lista e as paginas dentro do mesmo cartao. */
         .folha { padding: 6px 22px 10px; }
         .folha .extrato li.dia:first-child { padding-top: 14px; }
@@ -647,6 +686,10 @@
             .painel-form .cartao, .acesso { padding: 22px 20px 20px; }
             .leitura-saldo { text-align: left; }
             .folha { padding: 4px 16px 8px; }
+            /* No celular as duas datas dividem a linha e os botoes descem. */
+            .filtro { padding: 14px 16px; }
+            .filtro > div { flex: 1 1 8rem; }
+            .filtro input { width: 100%; }
             .dial-caixa { grid-template-columns: 140px minmax(0, 1fr); }
             .curva .eixo { font-size: 19px; }
             .curva .rotulo-fim { font-size: 22px; }

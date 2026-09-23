@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletEntry;
 use App\Support\Money;
+use Illuminate\Support\Carbon;
 
 // Reaproveita `userWithWallet`, `walletOf`, `deposit` e `transfer`, que servem
 // a qualquer tela financeira; o extrato só precisa acrescentar o estorno.
@@ -106,6 +107,17 @@ function diasNaTela(string $html): array
     preg_match_all('/<li class="dia">([^<]+)<\/li>/', $html, $achados);
 
     return array_map('trim', $achados[1]);
+}
+
+/**
+ * Um depósito feito no instante dado, como se a pessoa o tivesse feito naquela hora.
+ *
+ * O relógio fica onde foi posto: quem chama devolve com `Carbon::setTestNow()`.
+ */
+function depositoEm(string $quando, User $pessoa, string $valor = '1,00'): void
+{
+    Carbon::setTestNow($quando);
+    deposit($pessoa, $valor);
 }
 
 /** Força o mesmo instante em todos os lançamentos, para testar o desempate. */
