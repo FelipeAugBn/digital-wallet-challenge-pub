@@ -1,59 +1,337 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Wallet
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Carteira financeira web em que nenhuma movimentação pode ficar pela metade e o saldo é sempre
+explicável pelo histórico.
 
-## About Laravel
+## Sobre o projeto
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Cadastro e login por sessão, com a carteira nascendo zerada junto com a conta. Depósito,
+transferência pelo e-mail do destinatário, painel com o saldo e extrato paginado. O estorno
+acontece pela interface, para quem iniciou a operação, ou pela linha de comando, quando a
+inconsistência é detectada pela operação — e um comando à parte confere se o saldo ainda bate com o
+livro-razão.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| | |
+| --- | --- |
+| Linguagem | PHP 8.3 |
+| Framework | Laravel 12, com Blade |
+| Banco | PostgreSQL 18 |
+| Ambiente | Docker, via Laravel Sail |
+| Testes | Pest |
+| Estilo de código | Laravel Pint |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Sem API REST, fila ou cache externo: um monólito servido por sessão, com o PostgreSQL como única
+infraestrutura com estado.
 
-## Learning Laravel
+**Requisitos:** Docker e Docker Compose — PHP, Composer e Node rodam dentro dos containers. A
+aplicação publica a porta `8080` e o PostgreSQL a `5433`, ambas em `.env` (`APP_PORT`,
+`FORWARD_DB_PORT`) e trocáveis se estiverem ocupadas.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Como executar
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+A partir do repositório recém-baixado, na raiz do projeto.
 
-## Laravel Sponsors
+> **Windows:** os comandos usam shell POSIX (`$(id -u)`, barras invertidas na quebra de linha) e não
+> rodam no PowerShell nem no cmd. Use **WSL 2**, de preferência com o projeto dentro do sistema de
+> arquivos do Linux, ou o Git Bash.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**1. Configuração local**
 
-### Premium Partners
+```bash
+cp .env.example .env
+export WWWUSER=$(id -u)
+export WWWGROUP=$(id -g)
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+O `.env.example` traz apenas valores locais e fictícios. As duas variáveis fazem os arquivos
+gravados pelo container pertencerem ao seu usuário.
 
-## Contributing
+**2. Dependências do PHP**
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+O Sail vive em `vendor/`, que ainda não existe; esta primeira instalação usa um container avulso:
 
-## Code of Conduct
+```bash
+docker run --rm \
+  -u "$(id -u):$(id -g)" \
+  -v "$(pwd):/var/www/html" \
+  -w /var/www/html \
+  laravelsail/php83-composer:latest \
+  composer install --ignore-platform-reqs
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**3. Subir os serviços**
 
-## Security Vulnerabilities
+```bash
+./vendor/bin/sail up -d
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Na primeira vez a imagem é construída, o que leva alguns minutos. O PostgreSQL cria `wallet` e
+`wallet_testing`.
 
-## License
+**4. Banco e dados de demonstração**
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate --seed
+```
+
+O seeder imprime as contas criadas e seus saldos.
+
+**5. Assets da página inicial**
+
+A página de entrada (`/`) usa Vite e não abre sem o build; as telas da aplicação não dependem dele.
+
+```bash
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run build
+```
+
+**Pronto.** A aplicação responde em **<http://localhost:8080>**, e `/up` é o endpoint de saúde.
+`./vendor/bin/sail ps` deve mostrar os dois serviços como `Up` e `healthy`. Para parar sem apagar
+dados, `./vendor/bin/sail stop`; para remover containers e volume do banco,
+`./vendor/bin/sail down -v`.
+
+## Usuários de demonstração
+
+Criados pelo seeder, com senha fictícia igual para os três. São dados locais, sem valor fora deste
+ambiente.
+
+| Pessoa | E-mail | Senha | Saldo após o seeder |
+| --- | --- | --- | --- |
+| Ana Ribeiro | `ana@wallet.test` | `demonstracao` | R$ 800,00 |
+| Bruno Carvalho | `bruno@wallet.test` | `demonstracao` | R$ 600,00 |
+| Carla Nogueira | `carla@wallet.test` | `demonstracao` | R$ 350,00 |
+
+O cenário é fixo e cobre todos os estados que as telas exibem: três depósitos e duas transferências
+concluídas, uma transferência estornada a pedido de quem a iniciou e um depósito estornado por
+inconsistência. Tudo é criado pelas mesmas operações da interface — por isso a conferência de saldos
+passa no banco recém-semeado.
+
+<details>
+<summary>Sequência exata das movimentações</summary>
+
+```
+Ana deposita            R$ 1.000,00
+Bruno deposita          R$   500,00
+Carla deposita          R$   250,00
+Ana    →  Bruno         R$   200,00
+Bruno  →  Carla         R$   100,00
+Ana    →  Carla         R$   150,00   → estornada a pedido da Ana
+Carla deposita          R$    80,00   → estornada por inconsistência
+```
+
+</details>
+
+Para recriar o cenário do zero: `./vendor/bin/sail artisan migrate:fresh --seed`.
+
+## Funcionalidades e comandos
+
+**Cadastro e login.** Nome, e-mail e senha de no mínimo oito caracteres, com confirmação. A carteira
+é criada junto com a conta, na mesma transação.
+
+**Depósito** (`/deposits`) **e transferência** (`/transfers`). Valor no formato brasileiro
+(`1.000,50`), entre R$ 0,01 e R$ 1.000.000,00. A transferência identifica o destinatário pelo
+e-mail; para si mesmo ou acima do saldo é recusada sem alterar nenhuma carteira. Ambos os
+formulários trazem uma chave de idempotência do servidor, então reenviar a página não duplica a
+operação.
+
+**Extrato** (`/extrato`). Quinze lançamentos por página, do mais recente para o mais antigo, com
+rótulo, contraparte, valor com sinal e situação.
+
+**Estorno pela interface.** O botão aparece no extrato, somente nas operações concluídas que a
+própria pessoa iniciou.
+
+**Estorno por inconsistência.** O comando aceita apenas este motivo; estorno a pedido de usuário
+passa exclusivamente pela rota autenticada. Ele precisa do UUID da operação — para listar os
+elegíveis:
+
+```bash
+./vendor/bin/sail artisan tinker --execute="print(App\Models\Transaction::where('status','completed')->whereIn('type',['deposit','transfer'])->pluck('id')->implode(PHP_EOL));"
+```
+
+```bash
+./vendor/bin/sail artisan wallet:reverse <uuid> --reason=inconsistency
+```
+
+Devolve `0` e nomeia a original e o estorno. Operação já estornada, estorno, identificador
+inexistente ou outro motivo são recusados sem alterar nada.
+
+**Conferência de saldos.**
+
+```bash
+./vendor/bin/sail artisan wallet:check
+```
+
+Compara o saldo de cada carteira com a soma do livro-razão e com cada saldo acumulado. Devolve `0`
+quando tudo confere e `1` quando há divergência, apontando a carteira e o lançamento.
+
+**Logs.** JSON no `stderr`, com horário, nível, identificador da requisição e contexto. Toda
+resposta HTTP devolve o mesmo identificador no cabeçalho `X-Request-ID`, o que liga uma tela a uma
+linha de log.
+
+```bash
+docker compose logs -f laravel.test
+docker compose logs laravel.test | grep "operação financeira"
+```
+
+<details>
+<summary>Por que um comando Artisan não aparece nesses logs</summary>
+
+`docker compose logs` mostra o processo principal do container, que é a aplicação web. Um comando
+rodado com `sail artisan` é outro processo: escreve o mesmo JSON, mas direto no terminal onde você
+o executou.
+
+</details>
+
+## Arquitetura
+
+Laravel em MVC, com Blade renderizando no servidor. O diagrama mostra a cadeia; o que importa nela
+é que **a regra financeira mora na Action**, com a transação de banco, as travas e a idempotência —
+o Controller só escolhe a Policy, a Action e a resposta. Em volta ficam as classes de domínio:
+`Money`, os Enums, as Exceptions de negócio com mensagem em português e os utilitários que a Action
+compõe.
+
+```mermaid
+flowchart TD
+    Nav["Navegador"] --> Rota["Rota<br/>routes/web.php"]
+    Rota --> MW["Middleware<br/>auth · CSRF · throttle · X-Request-ID"]
+    MW --> FR["Form Request<br/>validação de entrada"]
+    FR --> Ctrl["Controller"]
+    Ctrl --> Pol["Policy<br/>quem pode agir"]
+    Pol --> Ctrl
+    Ctrl --> Act["Action<br/>transação · travas · idempotência"]
+    Act --> Mod["Models Eloquent"]
+    Mod --> PG[("PostgreSQL")]
+    PG --> Mod
+    Mod --> Act
+    Act --> Ctrl
+    Ctrl --> Blade["Blade"]
+    Blade --> Nav
+```
+
+As mesmas Actions atendem à interface e à linha de comando — `wallet:reverse` chama a mesma
+`ReverseTransaction` da rota de estorno. Uma API futura seria mais um adaptador de entrada sobre
+elas, sem reescrever regra financeira.
+
+O PostgreSQL não é só depósito de dados: `check constraints`, índices únicos e chaves estrangeiras
+cobram as mesmas regras que a aplicação já cobra.
+
+### Modelo de dados
+
+`wallets` guarda **quanto tem**; `wallet_entries` guarda **como chegou nesse número**. Uma operação
+gera um lançamento por carteira afetada: depósito gera um, transferência gera dois.
+
+```mermaid
+erDiagram
+    users ||--|| wallets : "tem uma"
+    users ||--o{ transactions : "inicia"
+    wallets ||--o{ transactions : "origem ou destino"
+    transactions ||--o{ wallet_entries : "gera"
+    wallets ||--o{ wallet_entries : "recebe"
+    transactions ||--o| transactions : "é estornada por"
+
+    users {
+        bigint id PK
+        string name
+        string email UK
+        string password
+    }
+    wallets {
+        bigint id PK
+        bigint user_id FK "único: uma carteira por pessoa"
+        bigint balance "centavos, com sinal"
+    }
+    transactions {
+        uuid id PK
+        string type "deposit · transfer · reversal"
+        string status "completed · reversed"
+        bigint amount "centavos, sempre positivo"
+        bigint initiated_by_user_id FK "nulo só em estorno operacional"
+        bigint source_wallet_id FK "nulo em depósito"
+        bigint destination_wallet_id FK "nulo em estorno de depósito"
+        uuid original_transaction_id FK "único: um estorno por operação"
+        string reversal_reason "user_request · inconsistency"
+        uuid idempotency_key "único por pessoa, quando presente"
+    }
+    wallet_entries {
+        bigint id PK
+        uuid transaction_id FK
+        bigint wallet_id FK
+        string type "credit · debit"
+        bigint amount "centavos, sempre positivo"
+        bigint balance_after "saldo da carteira depois deste lançamento"
+    }
+```
+
+## Segurança e consistência financeira
+
+**Tudo ou nada.** Depósito, transferência e estorno acontecem dentro de uma transação de banco:
+transação, lançamentos e saldos são gravados juntos, e nenhuma falha no meio deixa uma operação pela
+metade.
+
+**Travas por ID crescente.** Duas carteiras são sempre travadas da menor para a maior. Transferências
+cruzadas entre as mesmas pessoas, ao mesmo tempo, pedem as travas na mesma ordem e por isso não se
+enroscam.
+
+**Idempotência garantida pelo banco.** A chave de cada operação é gravada num índice único parcial
+por pessoa. Conferir antes de inserir não resolveria, porque entre a conferência e a inserção cabe
+outra requisição: o PostgreSQL recusa a segunda gravação e a aplicação devolve a operação original
+em vez de criar uma cópia. Reutilizar a chave com valor, tipo ou destino diferente é recusado.
+
+**`balance_after` em cada lançamento.** O livro-razão registra como ficou o saldo depois de cada
+linha, o que permite conferir não só o total, mas a sequência — e é o que `wallet:check` compara.
+
+**Estorno preserva o histórico.** A original permanece marcada como estornada, e o estorno entra
+como operação nova com lançamentos invertidos. Ele pode deixar a carteira negativa, e isso é aceito:
+as colunas de dinheiro são inteiros com sinal. Estornar um estorno, ou estornar duas vezes, é
+recusado pela aplicação e pelo índice único em `original_transaction_id`.
+
+**`wallet:check` só lê.** A transação é aberta em modo somente leitura de propósito: correção
+automática apagaria a evidência de um defeito antes que alguém soubesse que ele existiu.
+
+**Segurança.** Senhas com o hash do Laravel; CSRF em todos os formulários; cookie de sessão
+`HttpOnly` e `SameSite`, com `Secure` quando a resposta sai por HTTPS; cinco tentativas de login por
+minuto por IP e e-mail, e vinte requisições financeiras por minuto por pessoa, sem consumir cota ao
+apenas ler o saldo; Policies impedindo acesso a operação alheia; validação sempre no servidor. Erros
+esperados viram mensagem em português; falhas inesperadas mostram uma mensagem genérica com o
+identificador da requisição, sem stack trace fora do ambiente local. Os logs não registram senha,
+cookie nem token.
+
+## Testes
+
+A suíte roda contra PostgreSQL, no banco `wallet_testing`, criado junto com os containers. O banco
+`wallet` não é tocado.
+
+```bash
+./vendor/bin/sail pest                        # suíte completa
+./vendor/bin/sail pest --testsuite=Unit       # regras de dinheiro e de elegibilidade, sem banco
+./vendor/bin/sail pest --testsuite=Feature    # aplicação inteira, contra o PostgreSQL
+./vendor/bin/sail pest tests/Feature/Security
+./vendor/bin/sail pest tests/Feature/Reconciliation
+./vendor/bin/sail pest --order-by=random      # prova que nada depende da ordem
+./vendor/bin/sail pint --test                 # estilo de código
+```
+
+**SQLite não é usado em nenhum teste.** O `phpunit.xml` fixa `pgsql` e `wallet_testing`, e um teste
+afirma isso em tempo de execução. Travas de linha, rollback integral e recusa de chave repetida pelo
+índice são comportamento do banco: em outro banco o teste passaria sem provar nada.
+
+## Decisões e evoluções
+
+**Dinheiro em centavos inteiros.** Nenhum `float` toca valor monetário. A classe `Money` é a única
+porta de entrada: converte o formato brasileiro, recusa zero, negativo, mais de duas casas e valor
+acima do limite, e formata de volta para a tela.
+
+**Saldo atual junto com livro-razão.** Guardar só o saldo deixa o histórico impossível de auditar;
+guardar só os lançamentos exige somar tudo a cada tela. Manter os dois transforma a divergência
+entre eles em defeito detectável.
+
+**Blade em vez de API REST.** Uma API somada a um cliente separado dobraria a superfície sem
+acrescentar nada à regra financeira, que é o ponto do projeto.
+
+**Onde o projeto poderia crescer.** O escopo desta entrega está fechado e nada abaixo faz parte
+dele. Caso evolua, as extensões naturais seriam uma API sobre as mesmas Actions; um identificador
+público de carteira no lugar do e-mail, que hoje revela a uma pessoa autenticada se determinada
+conta existe; notificações de transferência recebida e de estorno; e testes de concorrência com
+processos simultâneos, já que a suíte prova a ordem em que as travas são pedidas, não a disputa
+acontecendo.
