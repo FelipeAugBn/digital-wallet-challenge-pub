@@ -30,6 +30,8 @@
         <env name="DB_DATABASE" value="wallet_testing" force="true"/>
         <env name="DB_USERNAME" value="sail" force="true"/>
         <env name="DB_PASSWORD" value="password" force="true"/>
+        <!-- Descarta só o canal padrão: os testes de log capturam o canal real por conta própria. -->
+        <env name="LOG_CHANNEL" value="null" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
