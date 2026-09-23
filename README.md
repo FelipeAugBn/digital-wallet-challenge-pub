@@ -23,7 +23,7 @@ livro-razão.
 Sem API REST, fila ou cache externo: um monólito servido por sessão, com o PostgreSQL como única
 infraestrutura com estado.
 
-**Requisitos:** Docker e Docker Compose — PHP, Composer e Node rodam dentro dos containers. A
+**Requisitos:** Docker e Docker Compose — PHP e Composer rodam dentro dos containers. A
 aplicação publica a porta `8080` e o PostgreSQL a `5433`, ambas em `.env` (`APP_PORT`,
 `FORWARD_DB_PORT`) e trocáveis se estiverem ocupadas.
 
@@ -75,16 +75,8 @@ Na primeira vez a imagem é construída, o que leva alguns minutos. O PostgreSQL
 ./vendor/bin/sail artisan migrate --seed
 ```
 
-O seeder imprime as contas criadas e seus saldos.
-
-**5. Assets da página inicial**
-
-A página de entrada (`/`) usa Vite e não abre sem o build; as telas da aplicação não dependem dele.
-
-```bash
-./vendor/bin/sail npm install
-./vendor/bin/sail npm run build
-```
+As linhas JSON impressas são os logs financeiros esperados, um por operação semeada; a tabela com
+as contas e seus saldos aparece ao final.
 
 **Pronto.** A aplicação responde em **<http://localhost:8080>**, e `/up` é o endpoint de saúde.
 `./vendor/bin/sail ps` deve mostrar os dois serviços como `Up` e `healthy`. Para parar sem apagar
