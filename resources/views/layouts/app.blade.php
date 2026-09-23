@@ -4,13 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Wallet')</title>
+    {{-- O tema e escolha da pessoa e fica so no navegador dela. Este trecho roda
+         antes do primeiro desenho para a pagina nao piscar clara antes de
+         escurecer; o padrao, sem escolha guardada, e o claro. --}}
+    <script>try{if(localStorage.getItem('wallet-tema')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}</script>
     {{-- O estilo mora aqui, inteiro, de proposito: as telas da aplicacao
          precisam abrir sem depender de nenhum passo de build. --}}
     <style>
         :root {
             color-scheme: light;
 
+            --fundo: #f4f7f5;
             --papel: #ffffff;
+            --papel-2: #f1f5f3;
             --tinta: #10211d;
             --tinta-media: #46605a;
             --tinta-fraca: #5c716c;
@@ -21,38 +27,70 @@
             --verde: #0f6b5c;
             --verde-escuro: #0a5044;
             --verde-fundo: #e9f2ef;
-
-            /* A banda da marca: um verde mais fechado que o das acoes, para que
-               o botao continue sendo a coisa mais verde da tela. */
-            --banda: #0b3f36;
-            --banda-tinta: #b9d4cc;
-            --banda-realce: #5fbfa8;
+            --sobre-verde: #ffffff;
 
             --alerta: #9c3122;
             --alerta-regua: #edc7bd;
             --alerta-fundo: #fcf1ee;
 
-            /* Estorno nao e erro: e um estado que pede atencao. Dai o ocre, e
-               nao o vermelho das falhas. */
+            /* Tres cores dizem a direcao do dinheiro, na tela e nos graficos:
+               verde entrando, coral saindo, ambar quando houve estorno. Estorno
+               nao e erro, dai nao ser o vermelho das falhas. */
+            --saida: #c43f2a;
             --estorno: #7c5410;
             --estorno-regua: #e6d5ae;
             --estorno-fundo: #f8f1e1;
-            --saida: #c9442d;
 
-            /* A coluna de dinheiro tem largura fixa, como num livro-razao: e
-               ela que mantem todos os valores num eixo so. A medida vem do
-               maior valor que a validacao aceita, "-R$ 1.000.000,00". */
+            --sombra: 0 1px 2px rgba(16, 33, 29, .04);
+
+            /* Todo numero em mono: e como se le um extrato, e os digitos se
+               alinham sem esforco. */
+            --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+
+            /* A coluna de dinheiro do extrato tem largura fixa, como num
+               livro-razao. A medida vem do maior valor que a validacao aceita,
+               "-R$ 1.000.000,00". */
             --coluna: 9.75rem;
             --vao: 1.25rem;
+        }
+
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+
+            --fundo: #0b191e;
+            --papel: #102227;
+            --papel-2: #15292f;
+            --tinta: #e8f3f1;
+            --tinta-media: #a9c4c0;
+            --tinta-fraca: #8aa8a2;
+            --regua: #1c343b;
+            --regua-forte: #2a4850;
+            --realce: #15292f;
+
+            --verde: #45c9a3;
+            --verde-escuro: #6ad6b7;
+            --verde-fundo: rgba(69, 201, 163, .12);
+            --sobre-verde: #06231b;
+
+            --alerta: #f08c7c;
+            --alerta-regua: rgba(240, 140, 124, .4);
+            --alerta-fundo: rgba(240, 140, 124, .1);
+
+            --saida: #e5735f;
+            --estorno: #d6a545;
+            --estorno-regua: rgba(214, 165, 69, .45);
+            --estorno-fundo: rgba(214, 165, 69, .12);
+
+            --sombra: none;
         }
 
         * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            background: var(--papel);
+            background: var(--fundo);
             color: var(--tinta);
-            font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         }
 
         :focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; border-radius: 2px; }
@@ -61,52 +99,73 @@
             *, ::before, ::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
         }
 
-        /* Uma medida so: marca, titulo e valor comecam no mesmo eixo em todas as telas. */
-        .medida { width: min(44rem, 100% - 2rem); margin-inline: auto; }
+        .medida { width: min(70rem, 100% - 2.5rem); margin-inline: auto; }
+        /* Telas de leitura e formularios nao precisam da largura do painel. */
+        .estreito { max-width: 52rem; }
 
-        /* ---- Banda da marca ---------------------------------------------- */
+        /* ---- Topo ---------------------------------------------------------- */
 
-        .topo { background: var(--banda); }
-        .topo-interno { display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.5rem; }
+        .topo { background: var(--papel); border-bottom: 1px solid var(--regua); }
+        .topo-interno { display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.75rem; min-height: 58px; }
         .marca {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             padding: 14px 0;
-            color: #fff;
-            font-size: 1.125rem;
+            color: var(--tinta);
+            font-size: 1.0625rem;
             font-weight: 700;
-            letter-spacing: -.02em;
+            letter-spacing: -.01em;
             text-decoration: none;
         }
+        .marca::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--verde); }
         .menu { display: flex; flex-wrap: wrap; }
         .menu a {
             margin-right: 1.375rem;
-            padding: 16px 0 14px;
-            border-bottom: 2px solid transparent;
-            color: var(--banda-tinta);
+            padding: 19px 0 17px;
+            border-bottom: 1px solid transparent;
+            color: var(--tinta-media);
             font-size: .9375rem;
             text-decoration: none;
             transition: color .12s ease, border-color .12s ease;
         }
-        .menu a:hover { color: #fff; border-bottom-color: rgba(255, 255, 255, .35); }
-        /* A tela aberta muda de cor, de peso e ganha um traco: nao e so a cor. */
-        .menu a[aria-current] { color: #fff; font-weight: 600; border-bottom-color: var(--banda-realce); }
-        .topo form { margin-left: auto; }
+        .menu a:hover { color: var(--tinta); }
+        /* A tela aberta muda de cor e ganha um traco: nao e so a cor. */
+        .menu a[aria-current] { color: var(--tinta); font-weight: 600; border-bottom-color: var(--verde); }
+        .direita { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .tema {
+            display: inline-grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            min-height: 0;
+            padding: 0;
+            background: transparent;
+            border: 1px solid var(--regua-forte);
+            color: var(--tinta-media);
+        }
+        .tema:hover { background: transparent; border-color: var(--verde); color: var(--tinta); }
+        .tema svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+        .tema .sol { display: none; }
+        :root[data-theme="dark"] .tema .lua { display: none; }
+        :root[data-theme="dark"] .tema .sol { display: block; }
         .topo form button {
             min-height: 34px;
             padding: 6px 12px;
             background: transparent;
-            border: 1px solid rgba(255, 255, 255, .35);
-            color: var(--banda-tinta);
+            border: 1px solid var(--regua-forte);
+            color: var(--tinta-media);
             font-size: .875rem;
             font-weight: 500;
         }
-        .topo form button:hover { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .6); color: #fff; }
-        .topo :focus-visible { outline-color: var(--banda-realce); }
+        .topo form button:hover { background: transparent; border-color: var(--verde); color: var(--tinta); }
 
-        /* ---- Conteudo ----------------------------------------------------- */
+        /* ---- Conteudo ------------------------------------------------------ */
 
-        main { padding: 36px 0 64px; }
+        main { padding: 32px 0 64px; }
 
-        h1 { margin: 0 0 6px; font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; }
+        h1 { margin: 0 0 6px; font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; }
+        h1.ola { margin: 0 0 18px; color: var(--tinta-media); font-size: .9375rem; font-weight: 500; letter-spacing: 0; }
         h2 {
             margin: 40px 0 8px;
             padding-top: 14px;
@@ -114,46 +173,80 @@
             font-size: .9375rem;
             font-weight: 600;
         }
-        .sub { margin: 0 0 28px; max-width: 52ch; color: var(--tinta-media); font-size: .9375rem; }
+        .sub { margin: 0 0 24px; max-width: 52ch; color: var(--tinta-media); font-size: .9375rem; }
         a { color: var(--verde); text-underline-offset: 2px; }
 
-        /* ---- Saldo: a unica coisa grande do projeto ----------------------- */
+        /* ---- Cartoes: a grade do painel ------------------------------------- */
 
-        .rotulo { margin: 0 0 2px; color: var(--tinta-media); font-size: .875rem; }
-        .saldo {
-            margin: 0;
-            padding-bottom: 14px;
-            /* Regua dupla: como se fecha um total num livro contabil. */
-            border-bottom: 4px double var(--verde);
-            font-size: clamp(2.5rem, 9vw, 3.1rem);
-            font-weight: 700;
-            line-height: 1.05;
-            letter-spacing: -.035em;
-            font-variant-numeric: tabular-nums;
+        .grade { display: grid; grid-template-columns: 7fr 5fr; gap: 18px; }
+        .cartao {
+            background: var(--papel);
+            border: 1px solid var(--regua);
+            border-radius: 6px;
+            padding: 20px 22px 16px;
+            box-shadow: var(--sombra);
         }
-        .saldo.negativo { border-bottom-color: var(--alerta); color: var(--alerta); }
+        .cartao h2 { margin: 0; padding: 0; border: 0; font-size: .9375rem; }
+        .cartao h2 span { margin-left: 8px; color: var(--tinta-fraca); font-weight: 400; }
+        .cartao .sub { margin: 2px 0 14px; font-size: .8125rem; color: var(--tinta-fraca); }
+        .cartao svg { display: block; width: 100%; height: auto; overflow: visible; }
+        .largo { grid-column: 1 / -1; }
+        .instrumento { order: 1; }
+        .dial-caixa { order: 2; }
+        .curva-caixa { order: 3; }
+        .fita { order: 4; }
+        .barras-caixa { order: 5; }
 
-        .desde { margin: 12px 0 0; color: var(--tinta-fraca); font-size: .875rem; }
+        /* ---- O instrumento: saldo, leituras e acoes -------------------------- */
 
-        .acoes { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 0; }
+        .instrumento { background: var(--papel); border: 1px solid var(--regua); padding: 26px 28px 24px; box-shadow: var(--sombra); }
+        .rotulo { margin: 0; color: var(--tinta-fraca); font-size: .8125rem; }
+        .saldo {
+            margin: 4px 0 0;
+            font: 500 clamp(2.5rem, 6vw, 4rem)/1 var(--mono);
+            letter-spacing: -.04em;
+            color: var(--tinta);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        .saldo.negativo { color: var(--alerta); }
+        .desde { margin: 10px 0 0; color: var(--tinta-fraca); font-size: .8125rem; }
+        .leituras {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 22px;
+            margin: 16px 0 0;
+            padding: 12px 0 0;
+            border-top: 1px dashed var(--regua-forte);
+            font: .8125rem var(--mono);
+        }
+        .leituras div { display: flex; gap: 8px; }
+        .leituras dt { color: var(--tinta-fraca); }
+        .leituras dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
+        .leituras .positivo { color: var(--verde); }
+        .leituras .negativo { color: var(--saida); }
+        .sem-janela { margin: 16px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--regua-forte); color: var(--tinta-media); font-size: .875rem; }
+
+        .acoes { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 0; }
         .acoes a {
             display: inline-flex;
-            min-height: 44px;
+            min-height: 42px;
             align-items: center;
-            padding: 11px 18px;
-            border: 1px solid var(--verde);
+            padding: 10px 18px;
+            border: 1px solid var(--regua-forte);
             border-radius: 4px;
-            color: var(--verde);
+            background: var(--papel-2);
+            color: var(--tinta);
             font-size: .9375rem;
             font-weight: 600;
             text-decoration: none;
             transition: background-color .12s ease, border-color .12s ease;
         }
-        .acoes a:hover { background: var(--verde-fundo); }
-        .acoes a.primaria { background: var(--verde); color: #fff; }
+        .acoes a:hover { border-color: var(--verde); }
+        .acoes a.primaria { background: var(--verde); border-color: var(--verde); color: var(--sobre-verde); }
         .acoes a.primaria:hover { background: var(--verde-escuro); border-color: var(--verde-escuro); }
 
-        /* ---- Formularios -------------------------------------------------- */
+        /* ---- Formularios ---------------------------------------------------- */
 
         main > form { max-width: 22rem; }
         label { display: block; margin-bottom: 5px; font-size: .875rem; font-weight: 600; }
@@ -177,7 +270,7 @@
 
         /* Campo de dinheiro: a moeda fica numa casa propria, separada por regua. */
         .campo-moeda { position: relative; margin-bottom: 18px; }
-        .campo-moeda input { margin-bottom: 0; padding-left: 58px; font-variant-numeric: tabular-nums; }
+        .campo-moeda input { margin-bottom: 0; padding-left: 58px; font-family: var(--mono); font-variant-numeric: tabular-nums; }
         .campo-moeda .prefixo {
             position: absolute;
             top: 1px;
@@ -189,17 +282,16 @@
             justify-content: center;
             border-right: 1px solid var(--regua-forte);
             color: var(--tinta-media);
-            font-size: .9375rem;
-            font-weight: 600;
+            font: 600 .9375rem var(--mono);
         }
 
         button {
-            min-height: 44px;
-            padding: 11px 18px;
+            min-height: 42px;
+            padding: 10px 18px;
             border: 1px solid var(--verde);
             border-radius: 4px;
             background: var(--verde);
-            color: #fff;
+            color: var(--sobre-verde);
             font: inherit;
             font-weight: 600;
             cursor: pointer;
@@ -209,7 +301,7 @@
         button:disabled { background: var(--regua); border-color: var(--regua-forte); color: var(--tinta-fraca); cursor: not-allowed; }
         main > form button { width: 100%; }
 
-        /* ---- Mensagens: a forma do sinal muda junto com a cor ------------- */
+        /* ---- Mensagens: a forma do sinal muda junto com a cor --------------- */
 
         @keyframes surge {
             from { opacity: 0; transform: translateY(-6px); }
@@ -244,7 +336,7 @@
             border-right: 7px solid transparent;
             border-bottom: 12px solid var(--alerta);
         }
-        .ok { background: var(--verde-fundo); border-color: #bcd8cf; border-left-color: var(--verde); color: var(--verde-escuro); }
+        .ok { background: var(--verde-fundo); border-color: var(--regua-forte); border-left-color: var(--verde); color: var(--verde); }
         .ok::before {
             content: "";
             position: absolute;
@@ -257,7 +349,45 @@
             transform: rotate(40deg);
         }
 
-        /* ---- Extrato: a folha de razao ------------------------------------ */
+        /* ---- A fita do painel ----------------------------------------------- */
+
+        .fita { padding-bottom: 8px; }
+        .fita-lista { list-style: none; margin: 10px 0 0; padding: 0; }
+        .fita-lista li {
+            position: relative;
+            display: grid;
+            grid-template-columns: 8.5rem minmax(0, 1fr) auto auto;
+            gap: 14px;
+            align-items: baseline;
+            padding: 10px 0 10px 12px;
+            border-bottom: 1px solid var(--regua);
+        }
+        .fita-lista li:last-child { border-bottom: 0; }
+        /* A haste a esquerda diz a direcao antes mesmo de ler o sinal. */
+        .fita-lista li::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--verde); }
+        .fita-lista li.saida::before { background: var(--saida); }
+        .fita-lista li.estorno::before { background: var(--estorno); }
+        .fita-lista .hora { font: .75rem var(--mono); color: var(--tinta-fraca); white-space: nowrap; }
+        .fita-lista .rot { min-width: 0; font-size: .9375rem; }
+        .fita-lista .rot em {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 1px 6px;
+            border: 1px solid var(--estorno-regua);
+            border-radius: 3px;
+            background: var(--estorno-fundo);
+            color: var(--estorno);
+            font: .6875rem var(--mono);
+        }
+        .fita-lista li.estornada .rot { color: var(--tinta-fraca); text-decoration: line-through; text-decoration-color: var(--estorno); }
+        .fita-lista li.estornada .rot em { text-decoration: none; }
+        .fita-lista .valor { font: 500 .875rem var(--mono); color: var(--saida); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .fita-lista .valor.entrada { color: var(--verde); }
+        .fita-lista .pos { font: .75rem var(--mono); color: var(--tinta-fraca); white-space: nowrap; }
+        .fita-lista .pos-rotulo { margin-right: 4px; }
+        .fita .alt { margin-top: 12px; }
+
+        /* ---- Extrato: a folha de razao -------------------------------------- */
 
         .extrato { position: relative; margin: 0; padding: 0; list-style: none; }
         /* A regua vertical que separa o historico da coluna de dinheiro. Fica na
@@ -304,10 +434,10 @@
             font-size: .8125rem;
             font-variant-numeric: tabular-nums;
         }
+        .extrato .meta > span:first-child { font-family: var(--mono); }
         .extrato .valor {
-            font-weight: 700;
+            font: 500 .9375rem var(--mono);
             font-variant-numeric: tabular-nums;
-            letter-spacing: -.01em;
             text-align: right;
             white-space: nowrap;
             color: var(--saida);
@@ -321,10 +451,10 @@
         .extrato .situacao.estornada {
             padding: 1px 8px;
             border: 1px solid var(--estorno-regua);
-            border-radius: 99px;
+            border-radius: 3px;
             background: var(--estorno-fundo);
             color: var(--estorno);
-            font-weight: 600;
+            font: .6875rem var(--mono);
         }
         .extrato li.estornada .descricao { color: var(--tinta-media); }
         .extrato li.estornada::before {
@@ -340,8 +470,8 @@
         /* A acao fica do lado do historico: a coluna de dinheiro so tem dinheiro. */
         .extrato .estorno { justify-self: start; margin: 10px 0 0; }
         .extrato .estorno button {
-            min-height: 36px;
-            padding: 7px 14px;
+            min-height: 34px;
+            padding: 6px 14px;
             background: var(--papel);
             border-color: var(--regua-forte);
             color: var(--alerta);
@@ -349,7 +479,7 @@
         }
         .extrato .estorno button:hover { background: var(--alerta-fundo); border-color: var(--alerta-regua); color: var(--alerta); }
 
-        .vazio { margin: 0; padding: 28px 0; border-bottom: 1px solid var(--regua); color: var(--tinta-media); font-size: .9375rem; }
+        .vazio { margin: 0; padding: 24px 0; color: var(--tinta-media); font-size: .9375rem; }
 
         .paginas { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 20px; font-size: .9375rem; }
         .paginas a {
@@ -360,94 +490,92 @@
             padding: 8px 14px;
             border: 1px solid var(--regua-forte);
             border-radius: 4px;
+            background: var(--papel);
             font-weight: 600;
             text-decoration: none;
             transition: background-color .12s ease, border-color .12s ease;
         }
         .paginas a:hover { background: var(--verde-fundo); border-color: var(--verde); }
         .paginas .seta { color: var(--tinta-fraca); }
-        .paginas .conta { margin: 0 auto; color: var(--tinta-media); font-variant-numeric: tabular-nums; }
+        .paginas .conta { margin: 0 auto; color: var(--tinta-media); font: .875rem var(--mono); }
 
         .alt { margin: 28px 0 0; color: var(--tinta-media); font-size: .9375rem; }
         .alt a { padding: 6px 2px; }
 
-        /* ---- Capa da pagina de entrada ------------------------------------ */
+        /* ---- Capa da pagina de entrada -------------------------------------- */
 
-        .capa { padding: 20px 0 52px; background: var(--banda); color: #fff; }
+        .capa { padding: 40px 0 44px; background: var(--papel); border-bottom: 1px solid var(--regua); }
         .capa h1 {
             max-width: 17ch;
             margin: 0 0 14px;
-            font-size: clamp(1.8rem, 5.5vw, 2.6rem);
+            font-size: clamp(1.8rem, 5vw, 2.6rem);
             line-height: 1.15;
             letter-spacing: -.03em;
             text-wrap: balance;
         }
-        .capa .sub { max-width: 46ch; margin: 0 0 28px; color: var(--banda-tinta); font-size: 1rem; }
+        .capa .sub { max-width: 46ch; margin: 0 0 28px; font-size: 1rem; }
         .capa .acoes { margin: 0; }
-        .capa .acoes a { border-color: rgba(255, 255, 255, .45); color: #fff; }
-        .capa .acoes a:hover { background: rgba(255, 255, 255, .12); }
-        .capa .acoes a.primaria { background: #fff; border-color: #fff; color: var(--banda); }
-        .capa .acoes a.primaria:hover { background: var(--banda-tinta); border-color: var(--banda-tinta); }
-        .capa :focus-visible { outline-color: var(--banda-realce); }
+        .amostra { margin: 0 0 6px; color: var(--tinta-fraca); font-size: .8125rem; }
 
-        .amostra { margin: 0 0 10px; color: var(--tinta-media); font-size: .875rem; }
+        /* ---- Graficos do painel --------------------------------------------- */
 
-        /* Graficos do painel: os unicos cartoes da folha, e so para os graficos. */
-        .graficos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 32px 0 0; }
-        .cartao { background: var(--papel); border: 1px solid var(--regua); border-radius: 14px; padding: 18px 18px 14px; box-shadow: 0 10px 24px -18px rgba(16, 33, 29, .35); }
-        .cartao.largo { grid-column: 1 / -1; }
-        .cartao h2 { margin: 0; padding: 0; border: 0; font-size: .9375rem; }
-        .cartao .sub { margin: 2px 0 10px; color: var(--tinta-fraca); font-size: .8125rem; }
-        .cartao svg { display: block; width: 100%; height: auto; overflow: visible; }
-        .cartao svg text { font-family: inherit; }
+        .cartao svg text { font-family: var(--mono); }
         .eixo { font-size: 11px; fill: var(--tinta-fraca); }
-        .traco { fill: none; stroke: var(--verde); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-        .marca-dia { fill: var(--papel); stroke: var(--verde); stroke-width: 2; }
-        .marca-estorno { fill: var(--estorno-fundo); stroke: var(--estorno); stroke-width: 2; }
+        .eixo.hoje { fill: var(--verde); }
+        .curva .grade { stroke: var(--regua); stroke-width: 1; }
+        .grade-forte { stroke: var(--regua-forte); stroke-width: 1; }
+        .area-topo, .area-base { stop-color: var(--verde); }
+        .traco { fill: none; stroke: var(--verde); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+        .marca-dia { fill: var(--papel); stroke: var(--verde); stroke-width: 1.6; }
+        .marca-estorno { fill: var(--papel); stroke: var(--estorno); stroke-width: 1.6; }
         .ponto-fim { fill: var(--verde); }
-        .halo { fill: var(--verde); opacity: .18; transform-origin: center; transform-box: fill-box; animation: pulso 2.4s ease-out infinite; }
-        @keyframes pulso { from { transform: scale(.6); opacity: .35; } to { transform: scale(1.6); opacity: 0; } }
+        .halo { fill: var(--verde); opacity: .14; }
         .rotulo-fim { font-size: 13px; font-weight: 700; fill: var(--tinta); }
-        .eixo-meio { stroke: var(--regua-forte); stroke-width: 1; }
+        .eixo-meio { stroke: var(--regua-forte); stroke-width: 1; stroke-dasharray: 2 3; }
         .b-entrada { fill: var(--verde); }
         .b-saida { fill: var(--saida); }
         .b-estorno { fill: var(--estorno); }
-        .legenda { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 0; padding: 0; list-style: none; color: var(--tinta-fraca); font-size: .8125rem; }
-        .legenda li::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--verde); }
+        .legenda { display: flex; flex-wrap: wrap; gap: 14px; margin: 8px 0 0; padding: 0; list-style: none; color: var(--tinta-fraca); font-size: .75rem; }
+        .legenda li::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--verde); }
         .legenda li.saida::before { background: var(--saida); }
         .legenda li.estorno::before { background: var(--estorno); }
-        .anel-caixa { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 10px; align-items: center; }
-        .trilho { fill: none; stroke: var(--regua); stroke-width: 12; }
-        .seg-entrou { fill: none; stroke: var(--verde); stroke-width: 12; stroke-linecap: round; }
-        .seg-saiu { fill: none; stroke: var(--saida); stroke-width: 12; stroke-linecap: round; }
-        .anel-percentual { font-size: 22px; font-weight: 800; fill: var(--tinta); letter-spacing: -.02em; }
-        .anel-lado { font-size: 10px; fill: var(--tinta-fraca); }
+
+        .dial-caixa { display: grid; grid-template-columns: 172px minmax(0, 1fr); gap: 18px; align-items: center; }
+        .dial-caixa h2 { grid-column: 1 / -1; }
+        .traco-dial { stroke: var(--regua-forte); stroke-width: 1.2; }
+        .trilho { fill: none; stroke: var(--regua); stroke-width: 10; }
+        .seg-entrou { fill: none; stroke: var(--verde); stroke-width: 10; stroke-linecap: round; }
+        .seg-saiu { fill: none; stroke: var(--saida); stroke-width: 10; stroke-linecap: round; }
+        .anel-percentual { font-size: 34px; font-weight: 500; fill: var(--tinta); letter-spacing: -.04em; }
+        .anel-lado { font: 11px system-ui, sans-serif; fill: var(--tinta-fraca); }
         .anel-legenda { margin: 0; padding: 0; list-style: none; font-size: .8125rem; }
-        .anel-legenda li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--regua); }
+        .anel-legenda li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--regua); }
         .anel-legenda li:last-child { border-bottom: 0; }
-        .anel-legenda b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .anel-legenda span { color: var(--tinta-media); }
+        .anel-legenda b { font: 500 .8125rem var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
         .anel-legenda .entrou b { color: var(--verde); }
         .anel-legenda .saiu b { color: var(--saida); }
         .anel-legenda .estornado b { color: var(--estorno); }
-        .anel-legenda .liquido { margin-top: 2px; border-top: 2px solid var(--regua); }
-        .anel-legenda .liquido span { font-weight: 600; }
-        .sem-janela { margin: 28px 0 0; color: var(--tinta-media); font-size: .9375rem; }
+        .anel-legenda .liquido { margin-top: 4px; border-top: 1px dashed var(--regua-forte); }
+        .anel-legenda .liquido span { color: var(--tinta); font-weight: 600; }
+        .anel-legenda .liquido b { font-weight: 600; }
 
-        @media (prefers-reduced-motion: reduce) {
-            .halo { animation: none; }
-        }
-
-        @media (max-width: 44rem) {
-            .graficos { grid-template-columns: 1fr; }
+        @media (max-width: 48rem) {
+            .grade { grid-template-columns: 1fr; }
+            .instrumento { padding: 22px 20px 20px; }
+            .dial-caixa { grid-template-columns: 140px minmax(0, 1fr); }
             .curva .eixo { font-size: 19px; }
             .curva .rotulo-fim { font-size: 22px; }
+            .fita-lista li { grid-template-columns: minmax(0, 1fr) auto; }
+            .fita-lista .hora { grid-column: 1 / -1; order: -1; }
+            .fita-lista .pos { display: none; }
             :root { --coluna: 9.125rem; --vao: 1rem; }
-            .topo-interno { gap: 0 1rem; }
+            .topo-interno { gap: 0 1rem; min-height: 0; }
             .marca { padding: 12px 0; }
             .menu { order: 3; flex-basis: 100%; }
-            .menu a { margin-right: 1.125rem; padding: 10px 0; font-size: .875rem; }
-            .extrato .valor { font-size: .9375rem; }
-            main { padding: 28px 0 48px; }
+            .menu a { margin-right: 1.125rem; padding: 10px 0 12px; font-size: .875rem; }
+            .extrato .valor { font-size: .875rem; }
+            main { padding: 24px 0 48px; }
             .extrato li.estornada::before { left: -10px; }
         }
     </style>
@@ -464,12 +592,22 @@
                     <a href="{{ route('transfers.create') }}" @if (request()->routeIs('transfers.create')) aria-current="page" @endif>Transferir</a>
                     <a href="{{ route('statement') }}" @if (request()->routeIs('statement')) aria-current="page" @endif>Extrato</a>
                 </nav>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit">Sair</button>
-                </form>
             @endauth
+
+            <div class="direita">
+                {{-- Lua no tema claro, sol no escuro: o icone mostra para onde o botao leva. --}}
+                <button class="tema" type="button" id="tema" aria-pressed="false" aria-label="Ativar tema escuro" title="Tema escuro">
+                    <svg class="lua" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 2.5a7.5 7.5 0 1 0 5 13.1 6.5 6.5 0 0 1-5-13.1z"/></svg>
+                    <svg class="sol" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 1.5v2.4M10 16.1v2.4M1.5 10h2.4M16.1 10h2.4M4 4l1.7 1.7M14.3 14.3 16 16M4 16l1.7-1.7M14.3 5.7 16 4"/></svg>
+                </button>
+
+                @auth
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit">Sair</button>
+                    </form>
+                @endauth
+            </div>
         </div>
     </header>
 
@@ -478,5 +616,27 @@
     <main class="medida">
         @yield('conteudo')
     </main>
+
+    {{-- A troca de tema e a unica coisa que precisa de script: o resto da
+         aplicacao continua funcionando com ele desligado. --}}
+    <script>
+        (function () {
+            var raiz = document.documentElement, botao = document.getElementById('tema');
+            if (!botao) return;
+            function rotula() {
+                var escuro = raiz.getAttribute('data-theme') === 'dark';
+                botao.setAttribute('aria-pressed', escuro ? 'true' : 'false');
+                botao.setAttribute('aria-label', escuro ? 'Ativar tema claro' : 'Ativar tema escuro');
+                botao.title = escuro ? 'Tema claro' : 'Tema escuro';
+            }
+            botao.addEventListener('click', function () {
+                var escuro = raiz.getAttribute('data-theme') === 'dark';
+                if (escuro) raiz.removeAttribute('data-theme'); else raiz.setAttribute('data-theme', 'dark');
+                try { localStorage.setItem('wallet-tema', escuro ? 'light' : 'dark'); } catch (e) {}
+                rotula();
+            });
+            rotula();
+        })();
+    </script>
 </body>
 </html>

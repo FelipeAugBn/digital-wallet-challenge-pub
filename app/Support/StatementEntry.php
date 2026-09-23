@@ -52,8 +52,11 @@ final readonly class StatementEntry
         public string $label,
         public string $amount,
         public bool $isCredit,
+        public bool $isReversal,
+        public string $balanceAfter,
         public string $dayKey,
         public string $dayLabel,
+        public string $dayShort,
         public string $time,
         public string $status,
         public ?string $reversibleId,
@@ -79,10 +82,15 @@ final readonly class StatementEntry
             label: self::label($transaction, $walletId, $isCredit),
             amount: $isCredit ? '+'.$signed->format() : $signed->format(),
             isCredit: $isCredit,
+            isReversal: $transaction->type === TransactionType::Reversal,
+            // O saldo depois do lancamento, como numa fita de extrato: e o que
+            // o livro-razao guardou, nao uma soma refeita aqui.
+            balanceAfter: Money::fromCents($entry->balance_after)->format(),
             // O dia e a hora saem separados porque a tela agrupa por dia: a
             // data inteira em toda linha repetiria o mesmo texto varias vezes.
             dayKey: $entry->created_at->format('Y-m-d'),
             dayLabel: self::dayLabel($entry->created_at),
+            dayShort: self::dayShort($entry->created_at),
             time: $entry->created_at->format('H:i'),
             status: $transaction->status === TransactionStatus::Reversed ? 'Estornada' : 'Concluída',
             reversibleId: $canReverse ? $transaction->id : null,
@@ -111,6 +119,23 @@ final readonly class StatementEntry
         $rotulo = $momento->day.' de '.self::MESES[$momento->month];
 
         return $momento->year === $hoje->year ? $rotulo : $rotulo.' de '.$momento->year;
+    }
+
+    /**
+     * O dia em poucas letras, para a fita do painel: `hoje`, `ontem` ou `18 set`.
+     *
+     * A fita tem uma coluna estreita para a hora, e o dia por extenso a
+     * empurraria para tres linhas. O extrato, que tem espaco, usa o extenso.
+     */
+    private static function dayShort(Carbon $momento): string
+    {
+        $rotulo = self::dayLabel($momento);
+
+        if ($rotulo === 'Hoje' || $rotulo === 'Ontem') {
+            return mb_strtolower($rotulo);
+        }
+
+        return $momento->day.' '.mb_substr(self::MESES[$momento->month], 0, 3).($momento->year === Carbon::now($momento->getTimezone())->year ? '' : ' '.$momento->year);
     }
 
     /** O rotulo de cada combinacao de operacao e lado do lancamento. */

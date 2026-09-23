@@ -23,26 +23,34 @@ final class DashboardCharts
     public const DIAS = 35;
 
     /** A caixa da curva do saldo, em unidades do SVG. */
-    public const CURVA_LARGURA = 640;
+    public const CURVA_LARGURA = 760;
 
-    public const CURVA_ALTURA = 170;
+    public const CURVA_ALTURA = 220;
 
     /** A caixa das barras; a altura depende de quanto saiu. */
     public const BARRAS_LARGURA = 320;
 
+    /** A linha do zero das barras: entradas sobem dela, saidas descem. */
+    public const BARRAS_MEIO = 150;
+
     /** O raio do anel do mes. */
-    public const ANEL_RAIO = 52;
+    public const ANEL_RAIO = 74;
 
-    private const CURVA_MARGENS = ['esquerda' => 8, 'direita' => 96, 'topo' => 22, 'base' => 26];
+    /** A margem esquerda guarda os rotulos do eixo; a direita, o saldo de hoje. */
+    private const CURVA_MARGENS = ['esquerda' => 64, 'direita' => 110, 'topo' => 18, 'base' => 34];
 
-    private const BARRAS = ['meio' => 96, 'altura' => 78, 'folga' => 5, 'margem' => 12];
+    private const BARRAS = ['meio' => self::BARRAS_MEIO, 'altura' => 128, 'folga' => 4, 'margem' => 12];
 
     /**
      * @param  list<array{x: float, y: float, titulo: string, estorno: bool}>  $pontos  um ponto por dia com movimento
      * @param  array{x: float, y: float}  $fim  o saldo de hoje
      * @param  list<array{x: float, rotulo: string, ancora: string}>  $eixo  os rotulos de data da curva
+     * @param  list<array{x1: float, x2: float, y1: float, y2: float, forte: bool}>  $grade  o papel milimetrado: um traco por dia e um por degrau de valor
+     * @param  list<array{x: float, y: float, rotulo: string}>  $eixoY  os rotulos de valor da curva
      * @param  list<array{x: float, rotulo: ?string, entrou: string, saiu: string, alturaEntrou: float, alturaSaiu: float, alturaEntrouEstorno: float, alturaSaiuEstorno: float}>  $barras
      * @param  list<array{rotulo: string, valor: string, classe: string}>  $legendaAnel
+     * @param  array{valor: string, classe: string}  $seteDias  o que mudou no saldo nos ultimos sete dias
+     * @param  array{valor: string, classe: string}  $liquidoMes  o que mudou no saldo desde o inicio do mes
      */
     private function __construct(
         public readonly string $linha,
@@ -50,6 +58,8 @@ final class DashboardCharts
         public readonly array $pontos,
         public readonly array $fim,
         public readonly array $eixo,
+        public readonly array $grade,
+        public readonly array $eixoY,
         public readonly string $saldoAtual,
         public readonly string $descricaoCurva,
         public readonly bool $temEstorno,
@@ -65,6 +75,8 @@ final class DashboardCharts
         public readonly float $deslocamentoSaiu,
         public readonly array $legendaAnel,
         public readonly string $descricaoAnel,
+        public readonly array $seteDias,
+        public readonly array $liquidoMes,
     ) {}
 
     /**
@@ -85,7 +97,7 @@ final class DashboardCharts
         $dias = self::porDia($lancamentos);
         $temEstorno = collect($dias)->contains(fn (array $dia) => $dia['estorno']);
 
-        [$linha, $area, $pontos, $fim, $eixo] = self::curva($dias, $saldoInicial, $saldoAtual, $inicio, $hoje);
+        [$linha, $area, $pontos, $fim, $eixo, $grade, $eixoY] = self::curva($dias, $saldoInicial, $saldoAtual, $inicio, $hoje);
         [$barras, $barrasAltura] = self::barras($dias);
         $anel = self::anel($lancamentos, $hoje);
 
@@ -95,6 +107,12 @@ final class DashboardCharts
             self::porExtenso($inicio),
             Money::fromCents($saldoAtual)->format(),
         );
+
+        // A leitura de sete dias e a soma com sinal do que aconteceu na semana:
+        // um numero so, ao lado do saldo, para dizer se ela foi de entrada ou de saida.
+        $seteDias = (int) $lancamentos
+            ->filter(fn (WalletEntry $l) => $l->created_at->greaterThanOrEqualTo($hoje->copy()->subDays(7)))
+            ->sum(fn (WalletEntry $l) => self::sinalizado($l));
 
         $descricaoBarras = implode('; ', array_map(
             fn (array $dia) => sprintf(
@@ -114,6 +132,8 @@ final class DashboardCharts
             'pontos' => $pontos,
             'fim' => $fim,
             'eixo' => $eixo,
+            'grade' => $grade,
+            'eixoY' => $eixoY,
             'saldoAtual' => Money::fromCents($saldoAtual)->format(),
             'descricaoCurva' => $descricaoCurva,
             'temEstorno' => $temEstorno,
@@ -121,8 +141,23 @@ final class DashboardCharts
             'barrasAltura' => $barrasAltura,
             'descricaoBarras' => $descricaoBarras,
             'mes' => ucfirst(StatementEntry::MESES[$hoje->month]),
+            'seteDias' => self::leitura($seteDias),
             ...$anel,
         ]);
+    }
+
+    /**
+     * Um valor com sinal e a classe que diz a direcao, para as leituras ao
+     * lado do saldo.
+     *
+     * @return array{valor: string, classe: string}
+     */
+    private static function leitura(int $centavos): array
+    {
+        return [
+            'valor' => ($centavos > 0 ? '+' : '').Money::fromCents($centavos)->format(),
+            'classe' => $centavos > 0 ? 'positivo' : ($centavos < 0 ? 'negativo' : 'neutro'),
+        ];
     }
 
     /**
@@ -174,10 +209,12 @@ final class DashboardCharts
     /**
      * A curva: do saldo antes da janela ao saldo de hoje, passando pelo saldo
      * no fim de cada dia com movimento. O eixo vertical comeca no zero, ou
-     * abaixo dele quando a carteira ficou negativa.
+     * abaixo dele quando a carteira ficou negativa, e fecha num degrau
+     * redondo acima do maior saldo, para que a grade termine numa linha com
+     * rotulo.
      *
      * @param  list<array{data: Carbon, ultimo: Carbon, entrou: int, saiu: int, entrouEstorno: int, saiuEstorno: int, estorno: bool, saldo: int}>  $dias
-     * @return array{0: string, 1: string, 2: list<array<string, mixed>>, 3: array{x: float, y: float}, 4: list<array<string, mixed>>}
+     * @return array{0: string, 1: string, 2: list<array<string, mixed>>, 3: array{x: float, y: float}, 4: list<array<string, mixed>>, 5: list<array<string, mixed>>, 6: list<array<string, mixed>>}
      */
     private static function curva(array $dias, int $saldoInicial, int $saldoAtual, Carbon $inicio, Carbon $hoje): array
     {
@@ -187,14 +224,29 @@ final class DashboardCharts
         $duracao = max($hoje->getTimestamp() - $inicio->getTimestamp(), 1);
 
         $saldos = array_merge([$saldoInicial, $saldoAtual], array_column($dias, 'saldo'));
-        $minimo = min(0, ...$saldos);
-        $maximo = max(...$saldos);
+        $degrau = self::degrau(max(...$saldos) - min(0, ...$saldos));
+        $minimo = (int) (floor(min(0, ...$saldos) / $degrau) * $degrau);
+        $maximo = (int) (ceil(max(...$saldos) / $degrau) * $degrau);
         if ($maximo === $minimo) {
-            $maximo = $minimo + 100;
+            $maximo = $minimo + $degrau;
         }
 
         $x = fn (Carbon $t) => $m['esquerda'] + ($t->getTimestamp() - $inicio->getTimestamp()) / $duracao * $largura;
         $y = fn (int $c) => $m['topo'] + (1 - ($c - $minimo) / ($maximo - $minimo)) * $altura;
+
+        // O papel milimetrado: um traco por dia, mais forte a cada semana, e um
+        // traco com rotulo por degrau de valor.
+        $grade = [];
+        $eixoY = [];
+        for ($dia = 0; $dia <= self::DIAS; $dia++) {
+            $xx = round($x($inicio->copy()->addDays($dia)), 1);
+            $grade[] = ['x1' => $xx, 'x2' => $xx, 'y1' => (float) $m['topo'], 'y2' => round($m['topo'] + $altura, 1), 'forte' => $dia % 7 === 0];
+        }
+        for ($valor = $minimo; $valor <= $maximo; $valor += $degrau) {
+            $yy = round($y($valor), 1);
+            $grade[] = ['x1' => (float) $m['esquerda'], 'x2' => round($m['esquerda'] + $largura, 1), 'y1' => $yy, 'y2' => $yy, 'forte' => $valor === $minimo || $valor === $maximo];
+            $eixoY[] = ['x' => $m['esquerda'] - 10, 'y' => round($yy + 4, 1), 'rotulo' => self::rotuloDeValor($valor, $degrau)];
+        }
 
         $serie = [[$x($inicio), $y($saldoInicial)]];
         $pontos = [];
@@ -216,13 +268,46 @@ final class DashboardCharts
         $base = round($y($minimo), 1);
         $area = sprintf('%s L%s,%s L%s,%s Z', $linha, $fim['x'], $base, round($serie[0][0], 1), $base);
 
-        $eixo = [
-            ['x' => (float) $m['esquerda'], 'rotulo' => self::curto($inicio), 'ancora' => 'start'],
-            ['x' => round($x($inicio->copy()->addSeconds(intdiv($duracao, 2))), 1), 'rotulo' => self::curto($inicio->copy()->addSeconds(intdiv($duracao, 2))), 'ancora' => 'middle'],
-            ['x' => $fim['x'], 'rotulo' => 'hoje', 'ancora' => 'end'],
-        ];
+        // Uma data por semana, e "hoje" na ponta.
+        $eixo = [];
+        for ($dia = 0; $dia < self::DIAS; $dia += 7) {
+            $data = $inicio->copy()->addDays($dia);
+            $eixo[] = ['x' => round($x($data), 1), 'rotulo' => self::curto($data), 'ancora' => $dia === 0 ? 'start' : 'middle'];
+        }
+        $eixo[] = ['x' => $fim['x'], 'rotulo' => 'hoje', 'ancora' => 'end'];
 
-        return [$linha, $area, $pontos, $fim, $eixo];
+        return [$linha, $area, $pontos, $fim, $eixo, $grade, $eixoY];
+    }
+
+    /**
+     * O rotulo de um degrau da grade, sem o "R$": em reais inteiros quando o
+     * degrau e redondo em reais, com centavos so quando a carteira e pequena
+     * o bastante para os centavos importarem.
+     */
+    private static function rotuloDeValor(int $centavos, int $degrau): string
+    {
+        $texto = Money::fromCents($centavos)->format();
+        $semMoeda = str_replace('R$ ', '', $texto);
+
+        return $degrau % 100 === 0 ? substr($semMoeda, 0, -3) : $semMoeda;
+    }
+
+    /**
+     * O degrau redondo da grade de valores: 1, 2, 2,5 ou 5 vezes uma potencia
+     * de dez, em centavos, o menor que divide a faixa em ate quatro partes.
+     */
+    private static function degrau(int $faixa): int
+    {
+        $bruto = max($faixa, 4) / 4;
+        $potencia = 10 ** floor(log10($bruto));
+
+        foreach ([1, 2, 2.5, 5, 10] as $multiplo) {
+            if ($multiplo * $potencia >= $bruto) {
+                return max(1, (int) round($multiplo * $potencia));
+            }
+        }
+
+        return max(1, (int) round(10 * $potencia));
     }
 
     /**
@@ -300,6 +385,7 @@ final class DashboardCharts
             'arcoEntrou' => round(max($circunferencia * $fracao - 2 * $folga, 0), 2),
             'arcoSaiu' => round(max($circunferencia * (1 - $fracao) - 2 * $folga, 0), 2),
             'deslocamentoSaiu' => round(-($circunferencia * $fracao + $folga), 2),
+            'liquidoMes' => self::leitura($liquido),
             'legendaAnel' => [
                 ['rotulo' => 'Entrou', 'valor' => '+'.Money::fromCents($entrou)->format(), 'classe' => 'entrou'],
                 ['rotulo' => 'Saiu', 'valor' => Money::fromCents(-$saiu)->format(), 'classe' => 'saiu'],

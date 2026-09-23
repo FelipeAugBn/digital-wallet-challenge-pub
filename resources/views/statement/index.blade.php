@@ -3,6 +3,7 @@
 @section('title', 'Extrato')
 
 @section('conteudo')
+<div class="estreito">
     <h1>Extrato</h1>
     <p class="sub">Todas as movimentações da sua carteira, da mais recente para a mais antiga.</p>
 
@@ -24,4 +25,5 @@
             @endif
         </nav>
     @endif
+</div>
 @endsection

@@ -23,6 +23,7 @@
 @endsection
 
 @section('conteudo')
+<div class="estreito">
     {{-- Uma amostra do extrato real: os mesmos rótulos, sinais e selos que a
          aplicação desenha. Os valores são de exemplo. --}}
     <p class="amostra">Exemplo de extrato</p>
@@ -59,4 +60,5 @@
             <span class="valor entrada">+R$ 250,00</span>
         </li>
     </ul>
+</div>
 @endsection

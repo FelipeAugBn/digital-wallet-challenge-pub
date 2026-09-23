@@ -101,14 +101,14 @@ test('num dia com entrada, saída e estorno, a barra mostra só a parte que foi 
 
     $html = painelDe($ana)->getContent();
 
-    // A escala é a maior barra, os R$ 50,00 do dia 10 (78 unidades). A barra
-    // verde do dia 11 tem 40, ou 62,4; um quarto dela, na ponta, é ocre: 15,6.
+    // A escala é a maior barra, os R$ 50,00 do dia 10 (128 unidades). A barra
+    // verde do dia 11 tem 40, ou 102,4; um quarto dela, na ponta, é âmbar: 25,6.
     expect(descricaoDoGrafico($html, 'barras-desc'))
         ->toBe('10 set: entrou R$ 50,00, saiu R$ 10,00 (R$ 10,00 de estorno); 11 set: entrou R$ 40,00 (R$ 10,00 de estorno), saiu R$ 5,00.')
         ->and(substr_count($html, 'class="b-entrada"'))->toBe(2)
         ->and(substr_count($html, 'class="b-saida"'))->toBe(2)
         ->and(substr_count($html, 'class="b-estorno"'))->toBe(2)
-        ->and($html)->toMatch('/height="15\.6" clip-path="url\(#ce1\)" class="b-estorno"/');
+        ->and($html)->toMatch('/height="25\.6" clip-path="url\(#ce1\)" class="b-estorno"/');
 });
 
 test('o estorno conta no mês em que o dinheiro voltou, não no mês da operação desfeita', function () {

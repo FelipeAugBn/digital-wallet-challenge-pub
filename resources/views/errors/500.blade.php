@@ -14,7 +14,7 @@
         body {
             margin: 0;
             padding: 24px 16px;
-            background: #f1f4f2;
+            background: #f4f7f5;
             color: #10211d;
             font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         }
@@ -23,8 +23,8 @@
             margin: 24px auto;
             padding: 28px;
             background: #fff;
-            border: 1px solid #e1e8e4;
-            border-radius: 10px;
+            border: 1px solid #dde5e1;
+            border-radius: 6px;
             box-shadow: 0 1px 2px rgba(16, 33, 29, .04);
         }
         h1 { margin: 0 0 4px; font-size: 1.3rem; font-weight: 600; letter-spacing: -.01em; }
@@ -33,9 +33,9 @@
         .codigo {
             margin: 0;
             padding: 11px 12px;
-            background: #f1f4f2;
-            border: 1px solid #e1e8e4;
-            border-radius: 6px;
+            background: #f1f5f3;
+            border: 1px solid #dde5e1;
+            border-radius: 4px;
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             font-size: .8125rem;
             word-break: break-all;
@@ -43,7 +43,7 @@
         .alt {
             margin: 24px 0 0;
             padding-top: 18px;
-            border-top: 1px solid #e1e8e4;
+            border-top: 1px solid #dde5e1;
             color: #47605a;
             font-size: .9375rem;
             text-align: center;

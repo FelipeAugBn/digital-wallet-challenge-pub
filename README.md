@@ -115,7 +115,7 @@ operação.
 
 **Painel** (`/dashboard`). Saldo, atalhos e as últimas movimentações, com três gráficos: a
 evolução do saldo nas últimas cinco semanas, as entradas e saídas de cada dia com movimento e
-um resumo do mês corrente.
+um resumo do mês corrente. O tema é claro por padrão, com opção de escuro guardada no navegador.
 
 **Extrato** (`/extrato`). Quinze lançamentos por página, do mais recente para o mais antigo, com
 rótulo, contraparte, valor com sinal e situação.
