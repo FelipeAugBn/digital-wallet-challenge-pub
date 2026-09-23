@@ -11,8 +11,9 @@ use Illuminate\Database\Eloquent\Collection;
 // o cenário semeado precisa existir de verdade no banco e passar pelo mesmo
 // comando de conferência que a aceitação da tarefa exige.
 require_once __DIR__.'/../Reconciliation/helpers.php';
-// E `valoresNaTela` e `diasNaTela`, para ler o extrato semeado como a pessoa o vê.
-require_once __DIR__.'/../Statement/helpers.php';
+// E `valoresNaTela`, `diasNaTela` e os leitores dos gráficos, para ler o extrato
+// e o painel semeados como a pessoa os vê.
+require_once __DIR__.'/../Dashboard/helpers.php';
 
 /** A pessoa de demonstração com este e-mail, como a aplicação a encontraria. */
 function pessoaDemo(string $email): User

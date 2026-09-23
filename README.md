@@ -113,6 +113,10 @@ e-mail; para si mesmo ou acima do saldo é recusada sem alterar nenhuma carteira
 formulários trazem uma chave de idempotência do servidor, então reenviar a página não duplica a
 operação.
 
+**Painel** (`/dashboard`). Saldo, atalhos e as últimas movimentações, com três gráficos: a
+evolução do saldo nas últimas cinco semanas, as entradas e saídas de cada dia com movimento e
+um resumo do mês corrente.
+
 **Extrato** (`/extrato`). Quinze lançamentos por página, do mais recente para o mais antigo, com
 rótulo, contraparte, valor com sinal e situação.
 

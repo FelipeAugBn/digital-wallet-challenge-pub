@@ -22,6 +22,12 @@
         <a href="{{ route('statement') }}">Ver extrato</a>
     </div>
 
+    @if ($graficos)
+        @include('dashboard.graficos')
+    @elseif ($recentes->isNotEmpty())
+        <p class="sem-janela">Sem movimentação nas últimas cinco semanas.</p>
+    @endif
+
     <h2>Movimentações recentes</h2>
 
     @include('statement.lista', ['itens' => $recentes, 'vazio' => 'Nenhuma movimentação ainda.'])

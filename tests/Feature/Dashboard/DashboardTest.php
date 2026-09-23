@@ -37,13 +37,15 @@ test('mostra o saldo da carteira e não a soma dos lançamentos', function () {
     deposit($ana, '5,00');
 
     // O saldo oficial é o da carteira. Mexo nele por fora para que somar os
-    // lançamentos daria outro número, e a tela precisa mostrar o oficial.
+    // lançamentos daria outro número, e o saldo da tela precisa ser o oficial.
+    // A soma pode aparecer nos gráficos, que contam o que entrou; o que não
+    // pode é tomar o lugar do saldo.
     Wallet::query()->whereKey(walletOf($ana)->id)->update(['balance' => 9_900]);
 
-    $this->actingAs($ana)->get(route('dashboard'))
-        ->assertOk()
-        ->assertSee('R$ 99,00')
-        ->assertDontSee('R$ 15,00');
+    $html = $this->actingAs($ana)->get(route('dashboard'))->assertOk()->getContent();
+    preg_match('/<p class="saldo[^"]*">([^<]+)<\/p>/', $html, $saldo);
+
+    expect($saldo[1] ?? null)->toBe('R$ 99,00');
 });
 
 test('mostra o nome da pessoa', function () {

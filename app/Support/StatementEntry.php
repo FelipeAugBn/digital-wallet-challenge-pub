@@ -39,11 +39,11 @@ final readonly class StatementEntry
      * Ficam explicitos, em vez de sair das traducoes do Carbon, porque o texto
      * do cabecalho e parte do que a tela promete e os testes fixam: assim ele
      * nao muda com uma versao da biblioteca nem com o idioma em tempo de
-     * execucao.
+     * execucao. O painel reaproveita a lista nos graficos.
      *
      * @var array<int, string>
      */
-    private const MESES = [
+    public const MESES = [
         1 => 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
         'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
     ];

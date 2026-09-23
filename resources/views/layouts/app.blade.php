@@ -37,6 +37,7 @@
             --estorno: #7c5410;
             --estorno-regua: #e6d5ae;
             --estorno-fundo: #f8f1e1;
+            --saida: #c9442d;
 
             /* A coluna de dinheiro tem largura fixa, como num livro-razao: e
                ela que mantem todos os valores num eixo so. A medida vem do
@@ -309,8 +310,10 @@
             letter-spacing: -.01em;
             text-align: right;
             white-space: nowrap;
+            color: var(--saida);
         }
-        /* O sinal ja diz a direcao; a cor so reforca o que o texto afirma. */
+        /* O sinal ja diz a direcao; a cor so reforca o que o texto afirma, e e a
+           mesma dos graficos do painel: verde entrando, coral saindo. */
         .extrato .valor.entrada { color: var(--verde); }
 
         /* Concluida e o caso comum e fica discreta. O selo sobra para o estorno. */
@@ -389,7 +392,55 @@
 
         .amostra { margin: 0 0 10px; color: var(--tinta-media); font-size: .875rem; }
 
+        /* Graficos do painel: os unicos cartoes da folha, e so para os graficos. */
+        .graficos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 32px 0 0; }
+        .cartao { background: var(--papel); border: 1px solid var(--regua); border-radius: 14px; padding: 18px 18px 14px; box-shadow: 0 10px 24px -18px rgba(16, 33, 29, .35); }
+        .cartao.largo { grid-column: 1 / -1; }
+        .cartao h2 { margin: 0; padding: 0; border: 0; font-size: .9375rem; }
+        .cartao .sub { margin: 2px 0 10px; color: var(--tinta-fraca); font-size: .8125rem; }
+        .cartao svg { display: block; width: 100%; height: auto; overflow: visible; }
+        .cartao svg text { font-family: inherit; }
+        .eixo { font-size: 11px; fill: var(--tinta-fraca); }
+        .traco { fill: none; stroke: var(--verde); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+        .marca-dia { fill: var(--papel); stroke: var(--verde); stroke-width: 2; }
+        .marca-estorno { fill: var(--estorno-fundo); stroke: var(--estorno); stroke-width: 2; }
+        .ponto-fim { fill: var(--verde); }
+        .halo { fill: var(--verde); opacity: .18; transform-origin: center; transform-box: fill-box; animation: pulso 2.4s ease-out infinite; }
+        @keyframes pulso { from { transform: scale(.6); opacity: .35; } to { transform: scale(1.6); opacity: 0; } }
+        .rotulo-fim { font-size: 13px; font-weight: 700; fill: var(--tinta); }
+        .eixo-meio { stroke: var(--regua-forte); stroke-width: 1; }
+        .b-entrada { fill: var(--verde); }
+        .b-saida { fill: var(--saida); }
+        .b-estorno { fill: var(--estorno); }
+        .legenda { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 0; padding: 0; list-style: none; color: var(--tinta-fraca); font-size: .8125rem; }
+        .legenda li::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--verde); }
+        .legenda li.saida::before { background: var(--saida); }
+        .legenda li.estorno::before { background: var(--estorno); }
+        .anel-caixa { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 10px; align-items: center; }
+        .trilho { fill: none; stroke: var(--regua); stroke-width: 12; }
+        .seg-entrou { fill: none; stroke: var(--verde); stroke-width: 12; stroke-linecap: round; }
+        .seg-saiu { fill: none; stroke: var(--saida); stroke-width: 12; stroke-linecap: round; }
+        .anel-percentual { font-size: 22px; font-weight: 800; fill: var(--tinta); letter-spacing: -.02em; }
+        .anel-lado { font-size: 10px; fill: var(--tinta-fraca); }
+        .anel-legenda { margin: 0; padding: 0; list-style: none; font-size: .8125rem; }
+        .anel-legenda li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--regua); }
+        .anel-legenda li:last-child { border-bottom: 0; }
+        .anel-legenda b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .anel-legenda .entrou b { color: var(--verde); }
+        .anel-legenda .saiu b { color: var(--saida); }
+        .anel-legenda .estornado b { color: var(--estorno); }
+        .anel-legenda .liquido { margin-top: 2px; border-top: 2px solid var(--regua); }
+        .anel-legenda .liquido span { font-weight: 600; }
+        .sem-janela { margin: 28px 0 0; color: var(--tinta-media); font-size: .9375rem; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .halo { animation: none; }
+        }
+
         @media (max-width: 44rem) {
+            .graficos { grid-template-columns: 1fr; }
+            .curva .eixo { font-size: 19px; }
+            .curva .rotulo-fim { font-size: 22px; }
             :root { --coluna: 9.125rem; --vao: 1rem; }
             .topo-interno { gap: 0 1rem; }
             .marca { padding: 12px 0; }
