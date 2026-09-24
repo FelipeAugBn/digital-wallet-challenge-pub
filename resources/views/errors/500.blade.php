@@ -5,6 +5,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Algo deu errado · Wallet</title>
+    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
     {{-- Esta pagina nao usa o layout comum de proposito: ela precisa aparecer
          mesmo quando a falha esta justamente no que o layout consulta. Por isso
          as cores sao repetidas aqui, e nao herdadas. --}}

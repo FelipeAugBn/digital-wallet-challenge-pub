@@ -68,3 +68,17 @@ test('o tema claro é o padrão e o botão oferece o escuro', function () {
             ->and($html)->toContain('aria-label="Ativar tema escuro"');
     }
 });
+
+test('a aba do navegador leva o ícone da Wallet, em SVG e com reserva para quem não o lê', function () {
+    $html = $this->get(route('login'))->assertOk()->getContent();
+
+    // O SVG e o preferido, o .ico fica para navegador antigo e o de toque para
+    // a tela inicial do celular. Os tres arquivos existem de verdade em `public`.
+    // O endereco vem do APP_URL do ambiente, por isso so o caminho e fixado.
+    expect($html)->toMatch('#<link rel="icon" href="[^"]+/favicon\.svg" type="image/svg\+xml">#')
+        ->and($html)->toMatch('#<link rel="icon" href="[^"]+/favicon\.ico" sizes="32x32">#')
+        ->and($html)->toMatch('#<link rel="apple-touch-icon" href="[^"]+/apple-touch-icon\.png">#')
+        ->and(file_get_contents(public_path('favicon.svg')))->toContain('<svg')
+        ->and(filesize(public_path('favicon.ico')))->toBeGreaterThan(0)
+        ->and(filesize(public_path('apple-touch-icon.png')))->toBeGreaterThan(0);
+});

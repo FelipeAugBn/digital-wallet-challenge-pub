@@ -4,10 +4,10 @@ import { diaRelativo, SESSAO } from './apoio.js';
 /**
  * O filtro por período, pelos campos de data do navegador.
  *
- * Ana é a pessoa com histórico: o seeder dá a ela dezenove lançamentos
- * espalhados pelas últimas cinco semanas, o suficiente para duas páginas. As
- * datas do cenário andam junto com o dia de hoje, então os testes contam os
- * dias a partir de hoje em vez de fixar uma data no calendário.
+ * Ana é a pessoa com histórico: o seeder dá a ela movimento em quase todo dia
+ * das últimas cinco semanas, o bastante para três páginas de extrato. As datas
+ * do cenário andam junto com o dia de hoje, então os testes contam os dias a
+ * partir de hoje em vez de fixar uma data no calendário.
  */
 
 test.use({ storageState: SESSAO.ana });
@@ -39,12 +39,12 @@ test('a próxima página continua no mesmo período', async ({ page }) => {
     await page.getByLabel('Data final').fill(fim);
     await page.getByRole('button', { name: 'Filtrar' }).click();
 
-    await expect(page.getByText('Página 1 de 2')).toBeVisible();
+    await expect(page.getByText(/^Página 1 de \d+$/)).toBeVisible();
 
     await page.getByRole('link', { name: 'Mais antigas' }).click();
 
     await expect(page).toHaveURL(new RegExp(`inicio=${inicio}&fim=${fim}&page=2`));
-    await expect(page.getByText('Página 2 de 2')).toBeVisible();
+    await expect(page.getByText(/^Página 2 de \d+$/)).toBeVisible();
     await expect(page.getByLabel('Data inicial')).toHaveValue(inicio);
 });
 
@@ -89,5 +89,5 @@ test('Limpar devolve o extrato inteiro', async ({ page }) => {
     await expect(page).toHaveURL(/\/extrato$/);
     await expect(page.getByLabel('Data inicial')).toHaveValue('');
     await expect(page.getByLabel('Data final')).toHaveValue('');
-    await expect(page.getByText('Página 1 de 2')).toBeVisible();
+    await expect(page.getByText(/^Página 1 de \d+$/)).toBeVisible();
 });

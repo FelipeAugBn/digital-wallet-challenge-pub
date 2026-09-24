@@ -41,11 +41,17 @@ class DatabaseSeeder extends Seeder
     public const SENHA = 'demonstracao';
 
     /**
-     * O mes de movimentacao das tres contas, do mais antigo para o mais recente.
+     * As cinco semanas de movimentacao das tres contas, da mais antiga para a
+     * mais recente.
      *
      * Cada linha e "dias atras, hora, operacao, de, para, valor". As duas
      * operacoes que terminam desfeitas ficam fora daqui, no fim de `run()`,
      * porque cada uma precisa da transacao que ela anula.
+     *
+     * O ritmo e o de uma carteira em uso: Ana movimenta quase todo dia, com um
+     * deposito pequeno por semana e transferencias miudas para os dois; Bruno
+     * e Carla aparecem dia sim, dia nao. E o que da aos graficos do painel um
+     * mes inteiro de pontos, e nao meia duzia.
      *
      * As quantias fecham exatamente nos saldos anunciados no README, e nenhuma
      * carteira passa por saldo negativo no caminho.
@@ -63,24 +69,54 @@ class DatabaseSeeder extends Seeder
         [self::DIA_DE_ABERTURA, '19:47', 'transferencia', 'ana', 'carla', '45,50'],
         [self::DIA_DE_ABERTURA, '20:15', 'transferencia', 'carla', 'ana', '20,00'],
 
-        [24, '08:30', 'deposito', 'ana', null, '200,00'],
+        [31, '09:40', 'transferencia', 'ana', 'bruno', '30,00'],
+        [30, '12:15', 'transferencia', 'carla', 'ana', '15,00'],
+        [29, '08:20', 'deposito', 'ana', null, '60,00'],
+        [29, '18:05', 'transferencia', 'ana', 'carla', '40,00'],
+        [28, '10:10', 'transferencia', 'bruno', 'ana', '25,00'],
+        [27, '14:30', 'transferencia', 'ana', 'bruno', '55,00'],
+        [26, '09:05', 'transferencia', 'ana', 'carla', '18,50'],
+        [25, '11:45', 'transferencia', 'carla', 'bruno', '60,00'],
+
+        [24, '08:30', 'deposito', 'ana', null, '50,00'],
         [24, '09:22', 'transferencia', 'ana', 'bruno', '90,00'],
         [24, '12:41', 'transferencia', 'bruno', 'ana', '60,00'],
         [24, '18:05', 'transferencia', 'ana', 'carla', '120,00'],
         [24, '19:30', 'transferencia', 'carla', 'bruno', '90,00'],
+        [22, '10:30', 'deposito', 'bruno', null, '100,00'],
+        [22, '13:15', 'transferencia', 'bruno', 'ana', '70,00'],
+        [21, '09:50', 'transferencia', 'ana', 'bruno', '33,00'],
+        [20, '15:20', 'transferencia', 'ana', 'carla', '27,75'],
+        [19, '11:00', 'transferencia', 'carla', 'ana', '80,50'],
+        [18, '08:45', 'deposito', 'ana', null, '40,00'],
+        [18, '17:30', 'transferencia', 'ana', 'bruno', '65,00'],
+        [17, '12:20', 'transferencia', 'bruno', 'carla', '45,00'],
 
-        [16, '08:05', 'deposito', 'bruno', null, '160,00'],
+        [16, '08:05', 'deposito', 'bruno', null, '60,00'],
         [16, '10:14', 'transferencia', 'ana', 'bruno', '35,00'],
         [16, '13:44', 'transferencia', 'bruno', 'ana', '35,00'],
         [16, '16:20', 'transferencia', 'ana', 'carla', '75,25'],
         [16, '17:02', 'transferencia', 'carla', 'ana', '12,75'],
+        [15, '10:05', 'transferencia', 'ana', 'carla', '30,00'],
+        [14, '09:30', 'transferencia', 'ana', 'bruno', '48,00'],
+        [13, '14:10', 'transferencia', 'carla', 'ana', '68,00'],
+        [12, '08:15', 'deposito', 'ana', null, '50,00'],
+        [12, '19:00', 'transferencia', 'ana', 'carla', '52,00'],
+        [11, '11:25', 'transferencia', 'bruno', 'ana', '139,50'],
+        [10, '16:40', 'transferencia', 'ana', 'bruno', '41,50'],
 
         [9, '09:15', 'transferencia', 'bruno', 'ana', '140,00'],
         [9, '11:50', 'transferencia', 'ana', 'carla', '64,00'],
         [9, '15:25', 'transferencia', 'carla', 'ana', '22,00'],
-        [9, '18:30', 'deposito', 'ana', null, '50,00'],
-
+        [9, '18:30', 'deposito', 'ana', null, '30,00'],
+        [8, '10:00', 'transferencia', 'ana', 'carla', '36,00'],
+        [7, '13:35', 'transferencia', 'carla', 'bruno', '70,00'],
+        [6, '09:10', 'transferencia', 'ana', 'bruno', '58,00'],
         [5, '14:05', 'transferencia', 'ana', 'bruno', '110,00'],
+        [4, '11:15', 'transferencia', 'bruno', 'ana', '200,00'],
+        [3, '15:50', 'transferencia', 'ana', 'carla', '44,25'],
+        [2, '09:00', 'deposito', 'ana', null, '20,00'],
+        [2, '17:25', 'transferencia', 'ana', 'bruno', '19,00'],
     ];
 
     /** Quantos dias antes de hoje o cenario abre: as pessoas nascem nesse dia. */

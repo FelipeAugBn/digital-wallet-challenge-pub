@@ -4,6 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Wallet')</title>
+    {{-- O icone da aba e a marca do cabecalho: o quadrado verde com o W. O SVG
+         acompanha o tema do navegador; o .ico e o de toque cobrem quem nao le
+         SVG na aba. Tudo servido daqui, sem passo de build. --}}
+    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
     {{-- O tema e escolha da pessoa e fica so no navegador dela. Este trecho roda
          antes do primeiro desenho para a pagina nao piscar clara antes de
          escurecer; o padrao, sem escolha guardada, e o claro. --}}

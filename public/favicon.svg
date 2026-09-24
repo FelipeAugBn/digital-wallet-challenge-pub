@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- A marca do cabeçalho, o quadrado verde, com o W da Wallet. As cores são
+       as mesmas dos tokens da aplicação: verde sobre branco no tema claro,
+       verde-água sobre escuro quando o navegador anuncia preferência por
+       escuro. -->
+  <style>
+    rect { fill: #0f6b5c; }
+    path { stroke: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      rect { fill: #45c9a3; }
+      path { stroke: #06231b; }
+    }
+  </style>
+  <rect width="32" height="32" rx="7"/>
+  <path d="M7.5 10.5 L11.5 22 L16 13.5 L20.5 22 L24.5 10.5" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

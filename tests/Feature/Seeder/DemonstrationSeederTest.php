@@ -53,8 +53,8 @@ test('as credenciais da demonstração entram na aplicação', function (string 
 test('o cenário tem depósitos e transferências concluídos', function () {
     $concluidas = Transaction::query()->where('status', TransactionStatus::Completed);
 
-    expect((clone $concluidas)->where('type', TransactionType::Deposit)->count())->toBe(6)
-        ->and((clone $concluidas)->where('type', TransactionType::Transfer)->count())->toBe(16);
+    expect((clone $concluidas)->where('type', TransactionType::Deposit)->count())->toBe(11)
+        ->and((clone $concluidas)->where('type', TransactionType::Transfer)->count())->toBe(41);
 });
 
 test('tem uma operação desfeita a pedido de quem a iniciou', function () {
@@ -91,10 +91,10 @@ test('os saldos finais são os que a demonstração anuncia', function () {
 });
 
 test('o dinheiro do cenário fecha com o que entrou e ficou de pé', function () {
-    // Vinte e quatro originais e dois estornos; o depósito tem um lado só, a
-    // transferência tem dois, e o estorno repete a forma da operação desfeita.
-    expect(Transaction::count())->toBe(26)
-        ->and(WalletEntry::count())->toBe(44)
+    // Cinquenta e quatro originais e dois estornos; o depósito tem um lado só,
+    // a transferência tem dois, e o estorno repete a forma da operação desfeita.
+    expect(Transaction::count())->toBe(56)
+        ->and(WalletEntry::count())->toBe(99)
         // Transferência não cria nem destrói dinheiro, e o depósito desfeito
         // saiu de cena: o que sobra nas três carteiras é o que entrou e ficou.
         ->and((int) Wallet::query()->sum('balance'))->toBe(175_000);
@@ -106,7 +106,7 @@ test('wallet:check não encontra divergência no banco semeado', function () {
     expect($resultado['codigo'])->toBe(Command::SUCCESS)
         ->and($resultado['saida'])->toContain('conferem')
         ->and($resultado['saida'])->toContain('3 carteira(s)')
-        ->and($resultado['saida'])->toContain('44 lançamento(s)');
+        ->and($resultado['saida'])->toContain('99 lançamento(s)');
 });
 
 test('as três pessoas veem a própria movimentação no extrato', function () {
@@ -182,13 +182,15 @@ test('as datas do cenário são determinísticas', function () {
         ->and(Carbon::parse(WalletEntry::query()->max('created_at'))->lessThan(Carbon::parse(HOJE_DA_DEMONSTRACAO)))->toBeTrue();
 });
 
-test('Ana tem 19 lançamentos e o extrato dela tem duas páginas', function () {
+test('Ana tem 45 lançamentos e o extrato dela tem três páginas cheias', function () {
     $ana = pessoaDemo('ana@wallet.test');
     $paginas = paginasDoExtrato($ana);
 
-    expect(WalletEntry::query()->where('wallet_id', $ana->wallet->id)->count())->toBe(19)
+    expect(WalletEntry::query()->where('wallet_id', $ana->wallet->id)->count())->toBe(45)
+        ->and($paginas)->toHaveCount(3)
         ->and($paginas[1])->toHaveCount(15)
-        ->and($paginas[2])->toHaveCount(4);
+        ->and($paginas[2])->toHaveCount(15)
+        ->and($paginas[3])->toHaveCount(15);
 });
 
 test('as páginas do extrato da Ana não repetem nem omitem lançamento', function () {
@@ -201,19 +203,22 @@ test('as páginas do extrato da Ana não repetem nem omitem lançamento', functi
         ->map(fn (WalletEntry $entry) => StatementEntry::from($entry, $ana->wallet->id)->amount)
         ->all();
 
-    expect(array_merge($paginas[1], $paginas[2]))->toBe($esperado);
+    expect(array_merge(...array_values($paginas)))->toBe($esperado);
 });
 
 test('lançamentos do mesmo dia ficam sob um único cabeçalho', function () {
     $ana = pessoaDemo('ana@wallet.test');
     $this->actingAs($ana);
 
-    // Quatro lançamentos em 14 de setembro, quatro em 7, quatro em 30 de agosto:
-    // um cabeçalho para cada dia, e a página vira exatamente numa virada de dia.
+    // Ana se move quase todo dia: cada dia com movimento vira um cabeçalho, os
+    // dias em que só os outros dois se moveram não aparecem, e as páginas viram
+    // numa virada de dia.
     expect(diasNaTela($this->get(route('statement'))->getContent()))
-        ->toBe(['Ontem', '18 de setembro', '14 de setembro', '7 de setembro', '30 de agosto'])
+        ->toBe(['Ontem', '21 de setembro', '20 de setembro', '19 de setembro', '18 de setembro', '17 de setembro', '15 de setembro', '14 de setembro', '13 de setembro', '12 de setembro'])
         ->and(diasNaTela($this->get(route('statement', ['page' => 2]))->getContent()))
-        ->toBe(['22 de agosto']);
+        ->toBe(['11 de setembro', '10 de setembro', '9 de setembro', '8 de setembro', '7 de setembro', '5 de setembro', '4 de setembro', '3 de setembro', '2 de setembro', '1 de setembro'])
+        ->and(diasNaTela($this->get(route('statement', ['page' => 3]))->getContent()))
+        ->toBe(['30 de agosto', '28 de agosto', '27 de agosto', '26 de agosto', '25 de agosto', '24 de agosto', '23 de agosto', '22 de agosto']);
 });
 
 test('o painel mostra quando foi a última movimentação', function () {
@@ -225,17 +230,18 @@ test('o painel mostra quando foi a última movimentação', function () {
 test('os gráficos do painel da Ana contam as cinco semanas do cenário', function () {
     $html = $this->actingAs(pessoaDemo('ana@wallet.test'))->get(route('dashboard'))->assertOk()->getContent();
 
-    // Seis dias com movimento, um rótulo para cada; em setembro saiu um pouco
-    // mais do que entrou. A legenda lista cada ação com o sinal que teve na
-    // carteira: o envio estornado sai em "Enviado" e volta em "Estornado".
-    expect(rotulosDasBarras($html))->toBe(['22 ago', '30 ago', '7 set', '14 set', '18 set', '22 set'])
-        ->and(centroDoAnel($html))->toBe(['51%', 'saiu'])
+    // Vinte e oito dias com movimento nas cinco semanas: as barras rotulam um
+    // dia a cada cinco para não se atropelar. Em setembro entrou um pouco mais
+    // do que saiu. A legenda lista cada ação com o sinal que teve na carteira:
+    // o envio estornado sai em "Enviado" e volta em "Estornado".
+    expect(rotulosDasBarras($html))->toBe(['22 ago', '27 ago', '3 set', '9 set', '14 set', '20 set'])
+        ->and(centroDoAnel($html))->toBe(['54%', 'entrou'])
         ->and(legendaDoAnel($html))->toBe([
-            'Depositado' => '+R$ 50,00',
-            'Recebido' => '+R$ 209,75',
-            'Enviado' => '-R$ 434,25',
+            'Depositado' => '+R$ 140,00',
+            'Recebido' => '+R$ 767,75',
+            'Enviado' => '-R$ 888,75',
             'Estornado' => '+R$ 150,00',
-            'Líquido' => '-R$ 24,50',
+            'Líquido' => '+R$ 169,00',
         ])
         ->and(descricaoDoGrafico($html, 'curva-desc'))->toBe('O saldo era R$ 0,00 em 19 de agosto e termina em R$ 800,00 hoje.');
 });

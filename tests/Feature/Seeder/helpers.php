@@ -83,14 +83,24 @@ function retratoDaDemonstracao(): array
     ];
 }
 
-/** As páginas do extrato da pessoa, já reduzidas aos valores mostrados. */
+/**
+ * As páginas do extrato da pessoa, já reduzidas aos valores mostrados.
+ *
+ * Segue o link de "mais antigas" até ele acabar, como a pessoa faria: o
+ * número de páginas sai da tela, e não de uma conta feita aqui.
+ *
+ * @return array<int, list<string>>
+ */
 function paginasDoExtrato(User $pessoa): array
 {
     $paginas = [];
 
-    for ($n = 1; $n <= 2; $n++) {
-        $paginas[$n] = valoresNaTela(test()->actingAs($pessoa)->get(route('statement', ['page' => $n]))->getContent());
-    }
+    for ($n = 1; ; $n++) {
+        $html = test()->actingAs($pessoa)->get(route('statement', ['page' => $n]))->getContent();
+        $paginas[$n] = valoresNaTela($html);
 
-    return $paginas;
+        if (! str_contains($html, 'rel="next"')) {
+            return $paginas;
+        }
+    }
 }

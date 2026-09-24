@@ -94,11 +94,12 @@ ambiente.
 | Bruno Carvalho | `bruno@wallet.test` | `demonstracao` | R$ 600,00 |
 | Carla Nogueira | `carla@wallet.test` | `demonstracao` | R$ 350,00 |
 
-O cenário é fixo: 26 operações distribuídas pelas últimas cinco semanas, entre depósitos e
-transferências das três contas, mais uma transferência estornada a pedido de quem a iniciou e um
-depósito estornado por inconsistência. Ana termina com 19 lançamentos, o bastante para o extrato ter
-uma segunda página. Tudo é criado pelas mesmas operações da interface, com o relógio da aplicação
-posicionado em cada data — por isso a conferência de saldos passa no banco recém-semeado.
+O cenário é fixo: 56 operações distribuídas pelas últimas cinco semanas, com movimento em quase
+todos os dias — depósitos pequenos, transferências miúdas entre as três contas, mais uma
+transferência estornada a pedido de quem a iniciou e um depósito estornado por inconsistência. Ana
+termina com 45 lançamentos, três páginas de extrato e um mês inteiro de pontos nos gráficos do
+painel. Tudo é criado pelas mesmas operações da interface, com o relógio da aplicação posicionado em
+cada data — por isso a conferência de saldos passa no banco recém-semeado.
 
 Para recriar o cenário do zero: `./vendor/bin/sail artisan migrate:fresh --seed`.
 
